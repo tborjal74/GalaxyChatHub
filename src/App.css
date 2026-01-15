@@ -134,6 +134,8 @@
     font-size: var(--text-base);
     font-weight: var(--font-weight-medium);
     line-height: 1.5;
+    padding: 6px;
+    border-radius: 8px;
   }
 
   input {

@@ -49,7 +49,7 @@ export function AuthPage({ onLogin }: AuthPageProps) {
 
             <Card className="w-full max-w-md p-8 bg-card/80 backdrop-blur-xl border-border relative z-10">
                 <div className="flex flex-col items-center mb-8">
-                    <h1 className="text-white">GalaxyChatHub</h1>
+                    <h1 className="text-white">Galaxy Chat Hub</h1>
                     <p className="text-muted-foreground text-sm mt-2">
                         {isLogin ? "Welcome back!" : "Create your account"}
                     </p>
