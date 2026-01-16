@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { AuthPage } from './components/authPage';
+import { Sidebar } from './components/sideBar';
 import './App.css'
 
 interface User {
@@ -21,12 +22,22 @@ function App() {
     setCurrentUser(null);
   };
 
-    if (!currentUser) {
-    return <AuthPage onLogin={handleLogin} />;
-  }
+  //   if (!currentUser) {
+  //   return <AuthPage onLogin={handleLogin} />;
+  // }
 
   return (
     <>
+      <Sidebar currentUser={{
+        username: '',
+        email: ''
+      }} activeView={'friends'} onViewChange={function (view: 'friends' | 'rooms' | 'profile'): void {
+        throw new Error('Function not implemented.');
+      } } onLogout={function (): void {
+        throw new Error('Function not implemented.');
+      } } rooms={[]} onRoomSelect={function (roomId: string): void {
+        throw new Error('Function not implemented.');
+      } } selectedRoom={null}/>
     </>
   )
 }

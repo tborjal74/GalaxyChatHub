@@ -1,6 +1,6 @@
-import { Users, Hash, Settings, LogOut, UserPlus, MessageCircle } from 'lucide-react';
+import { Users, Hash, Settings, LogOut, UserPlus, BotMessageSquare } from 'lucide-react';
 import { Avatar, AvatarFallback } from '../components/ui/avatar';
-import { Button } from './components/ui/button';
+import { Button } from '../components/ui/button'
 import { ScrollArea } from '../components/ui/scroll-area';
 
 interface SidebarProps {
@@ -27,9 +27,9 @@ export function Sidebar({
       {/* Server Icon Section */}
       <div className="flex items-center gap-3 p-4 border-b border-sidebar-border">
         <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-violet-600 rounded-full flex items-center justify-center">
-          <MessageCircle className="w-5 h-5 text-white" />
+          <BotMessageSquare className="w-5 h-5 text-white" />
         </div>
-        <span className="text-white">GalaxyChatHub</span>
+        <span className="text-white">Galaxy Chat Hub</span>
       </div>
 
       {/* Navigation */}
