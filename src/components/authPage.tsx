@@ -7,15 +7,15 @@ interface AuthPageProps {
 }
 
 export function AuthPage({ onLogin }: AuthPageProps) {
-    const [username, setUsername] = useState('');
     // Toggle between login and registration 
     const [isLogin, setIsLogin] = useState(true);
-
+    
     // Login states 
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
-
+    
     // Registration states 
+    const [username, setUsername] = useState('');
     const [firstName, setFirstName] = useState("");
     const [lastName, setLastName] = useState("");
     const [confirmPassword, setConfirmPassword] = useState("");
@@ -30,14 +30,6 @@ export function AuthPage({ onLogin }: AuthPageProps) {
                 alert("Passwords do not match!");
                 return;
             }
-            console.log("Register with:",
-                { firstName, 
-                  lastName, 
-                  email, 
-                  password, 
-                  confirmPassword, 
-                }
-            );
         }
     };
     return (
@@ -59,6 +51,16 @@ export function AuthPage({ onLogin }: AuthPageProps) {
                 <form onSubmit={handleSubmit} className="space-y-4">
                     {!isLogin ? (
                         <>
+                            <div>
+                                <Input
+                                    type="text"
+                                    placeholder="Username"
+                                    value={username}
+                                    onChange={(e) => setUsername(e.target.value)}
+                                    className="bg-input-background border-input text-white placeholder:text-muted-foreground"
+                                    required
+                                />
+                            </div>
                             <div>
                                 <Input
                                     type="text"
