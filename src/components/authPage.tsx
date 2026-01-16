@@ -1,21 +1,21 @@
 import { useState } from 'react';
-import { Input } from '../components/ui/input';
-import { Card } from '../components/ui/card';
+import { Input } from './ui/input';
+import { Card } from './ui/card';
 
 interface AuthPageProps {
     onLogin: (username: string, email: string) => void;
 }
 
 export function AuthPage({ onLogin }: AuthPageProps) {
-    const [username, setUsername] = useState('');
     // Toggle between login and registration 
     const [isLogin, setIsLogin] = useState(true);
-
+    
     // Login states 
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
-
+    
     // Registration states 
+    const [username, setUsername] = useState('');
     const [firstName, setFirstName] = useState("");
     const [lastName, setLastName] = useState("");
     const [confirmPassword, setConfirmPassword] = useState("");
@@ -24,20 +24,15 @@ export function AuthPage({ onLogin }: AuthPageProps) {
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         if (isLogin) { // Handle login 
+            // Just log in immediately with whatever was typed 
+            // Will need to be changed when dealing with auth with backend
+            onLogin(email.split("@")[0] || "User", email);
             console.log("Login with:", { email, password });
         } else { // Handle registration 
             if (password !== confirmPassword) {
                 alert("Passwords do not match!");
                 return;
             }
-            console.log("Register with:",
-                { firstName, 
-                  lastName, 
-                  email, 
-                  password, 
-                  confirmPassword, 
-                }
-            );
         }
     };
     return (
@@ -59,6 +54,16 @@ export function AuthPage({ onLogin }: AuthPageProps) {
                 <form onSubmit={handleSubmit} className="space-y-4">
                     {!isLogin ? (
                         <>
+                            <div>
+                                <Input
+                                    type="text"
+                                    placeholder="Username"
+                                    value={username}
+                                    onChange={(e) => setUsername(e.target.value)}
+                                    className="bg-input-background border-input text-white placeholder:text-muted-foreground"
+                                    required
+                                />
+                            </div>
                             <div>
                                 <Input
                                     type="text"
