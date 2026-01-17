@@ -1,8 +1,9 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { AuthPage } from './components/authPage';
 import { Sidebar } from "./components/sideBar"
 import './App.css'
 import { ProfileView } from './components/ProfileView';
+import { socket } from './socket';
 
 interface User {
   username: string;
@@ -15,10 +16,38 @@ interface User {
 function App() {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [activeView, setActiveView] = useState<'friends' | 'rooms' | 'profile'>('friends');
+  const [isConnected, setIsConnected] = useState(socket.connected);
+
+  useEffect(() => {
+    function onConnect() {
+      setIsConnected(true);
+      console.log("Socket connected!");
+    }
+
+    function onDisconnect() {
+      setIsConnected(false);
+      console.log("Socket disconnected!");
+    }
+
+    socket.on('connect', onConnect);
+    socket.on('disconnect', onDisconnect);
+
+    // Connect only if we have a user (optional strategy)
+    if (currentUser) {
+       socket.connect();
+    }
+
+    return () => {
+      socket.off('connect', onConnect);
+      socket.off('disconnect', onDisconnect);
+      socket.disconnect();
+    };
+  }, [currentUser]);
 
   const handleLogin = (username: string, email: string) => {
     setCurrentUser({ username, email, joinedDate: new Date() });
   };
+
 
   const handleLogout = () => {
     setCurrentUser(null);
