@@ -36,7 +36,7 @@ io.on('connection', (socket) => {
 
 // Basic route
 app.get('/', (req, res) => {
-  res.send('Welcome to Galaxy Chat Hub Backend!');
+  res.send('Welcome to Galaxy Chat Hub!');
 });
 
 // Use routes
