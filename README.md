@@ -22,3 +22,9 @@ GalaxyChatHub aims to provide a **community-driven chat platform** where convers
 ― Carl Sagan, Cosmos
 
 “Do not go where the path may lead, go instead where there is no path and leave a trail.” — Ralph Waldo Emerson
+
+Core Members:
+- Marcos Antunes Jr.
+- Terence Dreico Borjal
+- Loris Jared Ndonga
+- Collin Earl Highwood
