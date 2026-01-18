@@ -1,8 +1,10 @@
 import { io } from 'socket.io-client';
 
-// "undefined" means the URL will be computed from the `window.location` object
-const URL = process.env.NODE_ENV === 'production' ? undefined : 'http://localhost:3000';
+// Use import.meta.env for Vite
+const URL = import.meta.env.PROD ? undefined : 'http://localhost:3000';
 
-export const socket = io(URL, {
+// If URL is undefined, it defaults to window.location which is fine for production
+// providing the backend serves the frontend.
+export const socket = io(URL || '', {
     autoConnect: false
 });
