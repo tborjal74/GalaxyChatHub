@@ -247,19 +247,6 @@ export function ProfileView({ user, onUpdateProfile }: ProfileViewProps) {
                     </select>
                   </div>
 
-                  <div className="flex justify-between items-center py-3 border-b border-border">
-                    <div>
-                      <div className="text-white">Online Status</div>
-                      <div className="text-sm text-muted-foreground">
-                        Show your online status to others
-                      </div>
-                    </div>
-                    <select className="bg-input-background border border-input text-white rounded-md px-3 py-2">
-                      <option>Visible</option>
-                      <option>Invisible</option>
-                    </select>
-                  </div>
-
                   <div className="flex justify-between items-center py-3">
                     <div>
                       <div className="text-white">Read Receipts</div>
