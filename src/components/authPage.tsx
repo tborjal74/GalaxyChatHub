@@ -62,8 +62,7 @@ export function AuthPage({ onLogin }: AuthPageProps) {
                 const response = await fetch(`${API_URL}/register`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    // Backend schema only supports username, email, password. firstName/lastName ignored for now.
-                    body: JSON.stringify({ username, email, password }), 
+                    body: JSON.stringify({ username, email, password, firstName, lastName }), 
                 });
 
                 const data = await response.json();

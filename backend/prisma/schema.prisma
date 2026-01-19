@@ -12,6 +12,8 @@ model User {
   username  String     @unique
   email     String     @unique
   password  String
+  firstName String?
+  lastName  String?
   bio       String?    @db.VarChar(500)
   avatarUrl String?
   status    UserStatus @default(OFFLINE)

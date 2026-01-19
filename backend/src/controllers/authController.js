@@ -8,7 +8,7 @@ const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
 
 export const register = async (req, res) => {
   try {
-    const { username, email, password } = req.body;
+    const { username, email, password, firstName, lastName } = req.body;
 
     if (!username || !email || !password) {
       return errorResponse(res, "Please provide username, email, and password", 400);
@@ -38,6 +38,8 @@ export const register = async (req, res) => {
         username,
         email,
         password: hashedPassword,
+        firstName,
+        lastName,
         status: "ONLINE" // Default status
       }
     });
