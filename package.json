@@ -10,8 +10,8 @@
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "prisma:generate": "npx prisma generate --cwd backend",
-    "prisma:migrate": "npx prisma migrate dev --cwd backend",
+    "prisma:generate": "npx prisma generate --config backend/prisma.config.ts",
+    "prisma:migrate": "npx prisma migrate dev --config backend/prisma.config.ts",
     "db:setup": "npm run prisma:migrate && npm run prisma:generate"
   },
   "dependencies": {
