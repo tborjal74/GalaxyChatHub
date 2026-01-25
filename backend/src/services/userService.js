@@ -35,3 +35,5 @@ export const deleteUserById = async (id) => {
     where: { id: Number(id) },
   });
 };
+
+

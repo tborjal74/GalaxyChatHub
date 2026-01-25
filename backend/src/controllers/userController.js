@@ -57,3 +57,107 @@ export const deleteUserById = async (req, res) => {
   }
 };
 
+export const uploadUserAvatar = async (req, res) => {
+  try {
+    const userId = req.user.userId;
+
+    if (!req.file) {
+      return errorResponse(res, "No file uploaded", 400);
+    }
+
+    const avatarUrl = `/uploads/avatars/${req.file.filename}`;
+
+    const updatedUser = await prisma.user.update({
+      where: { id: userId },
+      data: { avatarUrl },
+    });
+
+    return successResponse(res, {
+      avatarUrl: updatedUser.avatarUrl,
+    }, "Avatar updated successfully");
+
+  } catch (error) {
+    return errorResponse(res, "Failed to upload avatar", 500, error);
+  }
+};
+
+
+export const getMe = async (req, res) => {
+  try {
+    const userId = req.user.userId;
+
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: {
+        username: true,
+        email: true,
+        bio: true,
+        avatarUrl: true,
+        createdAt: true,
+      },
+    });
+
+    if (!user) {
+      return errorResponse(res, "User not found", 404);
+    }
+
+    return successResponse(res, user, "User loaded");
+  } catch (err) {
+    return errorResponse(res, "Failed to load user", 500, err);
+  }
+};
+
+export const updateMe = async (req, res) => {
+  try {
+    const userId = req.user.userId;
+
+    const {
+      username,
+      email,
+      bio,
+      removeAvatar,
+    } = req.body || {};
+
+    const data = {};
+
+    if (username) data.username = username;
+    if (email) data.email = email;
+    if (bio !== undefined) data.bio = bio;
+
+    // Avatar upload
+    if (req.file) {
+      data.avatarUrl = `/uploads/avatars/${req.file.filename}`;
+    }
+
+    // Avatar removal
+    if (removeAvatar === "true") {
+      data.avatarUrl = null;
+    }
+
+    const updatedUser = await prisma.user.update({
+      where: { id: userId },
+      data,
+      select: {
+        username: true,
+        email: true,
+        bio: true,
+        avatarUrl: true,
+        createdAt: true,
+      },
+    });
+
+    return successResponse(
+      res,
+      updatedUser,
+      "Profile updated successfully"
+    );
+  } catch (error) {
+    return errorResponse(res, "Failed to update profile", 500, error);
+  }
+};
+
+
+
+
+
+
