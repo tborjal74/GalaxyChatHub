@@ -35,6 +35,7 @@ export function ConfirmDangerModal({
             variant="outline"
             onClick={onCancel}
             disabled={isLoading}
+            className="cursor-pointer"
           >
             Cancel
           </Button>
@@ -43,6 +44,7 @@ export function ConfirmDangerModal({
             variant="destructive"
             onClick={onConfirm}
             disabled={isLoading}
+            className="cursor-pointer"
           >
             {isLoading ? "Deleting..." : confirmLabel}
           </Button>
