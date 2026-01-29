@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { AuthPage } from "./components/AuthPage";
 import { Sidebar } from "./components/sideBar";
 import "./App.css";
@@ -6,8 +6,10 @@ import { ProfileView } from "./components/profile/ProfileView";
 import { FriendsView } from "./components/FriendsView";
 import { ChatArea } from "./components/ChatArea";
 import { socket } from "./socket";
+import { ConfirmModal } from "./components/ui/confirm-modal";
 
 interface User {
+  id: number;
   username: string;
   email: string;
   bio?: string;
@@ -23,7 +25,13 @@ function App() {
   );
   const [isConnected, setIsConnected] = useState(socket.connected);
   const [selectedFriend, setSelectedFriend] = useState<any | null>(null);
+  const selectedFriendRef = useRef(selectedFriend);
   const [rooms, setRooms] = useState<any[]>([]);
+  const [modal, setModal] = useState({ isOpen: false, title: "", message: "", type: "info" as "danger"|"info"|"alert", onConfirm: undefined as undefined|(() => void) });
+
+  useEffect(() => {
+      selectedFriendRef.current = selectedFriend;
+  }, [selectedFriend]);
 
   // Restore session on mount
   useEffect(() => {
@@ -78,8 +86,28 @@ function App() {
       console.log("Socket disconnected!");
     }
 
+    function onRoomDeleted(payload: { roomId: number, deleterId?: number }) {
+        console.log("Room deleted:", payload.roomId);
+        setRooms((prev: any[]) => prev.filter((r: any) => !(r.type === 'room' && r.originalId === payload.roomId)));
+        
+        const current = selectedFriendRef.current;
+        if(current && current.type === 'room' && current.originalId === payload.roomId) {
+            setSelectedFriend(null);
+            if (currentUser && currentUser.id !== payload.deleterId) {
+                 setModal({
+                    isOpen: true,
+                    title: "Group Deleted",
+                    message: "This group chat has been deleted.",
+                    type: "alert",
+                    onConfirm: undefined
+                });
+            }
+        }
+    }
+
     socket.on("connect", onConnect);
     socket.on("disconnect", onDisconnect);
+    socket.on("room_deleted", onRoomDeleted);
 
     // Connect only if we have a user (optional strategy)
     if (currentUser) {
@@ -89,6 +117,7 @@ function App() {
     return () => {
       socket.off("connect", onConnect);
       socket.off("disconnect", onDisconnect);
+      socket.off("room_deleted", onRoomDeleted);
       socket.disconnect();
     };
   }, [currentUser]);
@@ -96,15 +125,28 @@ function App() {
   // Fetch Rooms (Conversations)
   const fetchRooms = async () => {
      if(!currentUser) return;
+     const token = localStorage.getItem('token');
      try {
-       const token = localStorage.getItem('token');
-       const res = await fetch('http://localhost:3000/api/messages/conversations', {
+       // Fetch DMs
+       const resDM = await fetch('http://localhost:3000/api/messages/conversations', {
            headers: { Authorization: `Bearer ${token}` }
        });
-       const data = await res.json();
-       if(data.success) {
-           setRooms(data.data);
+       const dataDM = await resDM.json();
+       
+       // Fetch Rooms
+       const resRooms = await fetch('http://localhost:3000/api/rooms', {
+           headers: { Authorization: `Bearer ${token}` }
+       });
+       const dataRooms = await resRooms.json();
+
+       let combined: any[] = [];
+       if(dataDM.success) {
+           combined.push(...dataDM.data.map((d: any) => ({ ...d, id: `dm_${d.id}`, originalId: d.id, type: 'dm' })));
        }
+       if(dataRooms.success) {
+            combined.push(...dataRooms.data.map((r: any) => ({ ...r, id: `room_${r.id}`, originalId: r.id, type: 'room' })));
+       }
+       setRooms(combined);
      } catch(e) { console.error(e); }
   };
 
@@ -171,35 +213,31 @@ function App() {
 
   return (
     <div className="flex h-screen bg-background overflow-hidden">
-      
-      <div className="fixed top-2 right-2 z-50">
-        <span
-          className={`inline-block w-3 h-3 rounded-full ${isConnected ? "bg-green-500" : "bg-red-500"}`}
-          title={isConnected ? "Connected" : "Disconnected"}
-        />
-      </div>
 
       <Sidebar
         currentUser={currentUser}
         activeView={activeView}
-        onViewChange={setActiveView}
+        onViewChange={(view) => {
+            if (view === 'rooms') setSelectedFriend(null);
+            setActiveView(view);
+        }}
         onLogout={handleLogout}
         rooms={rooms}
         onRoomSelect={(roomId) => {
             const room = rooms.find(r => r.id === roomId);
             if(room) {
-                // Ensure ID is passed as number if needed, but ChatArea uses it as is (or casts it)
-                setSelectedFriend({ ...room, id: parseInt(room.id) }); 
+                setSelectedFriend(room); 
                 setActiveView('rooms'); 
             }
         }}
-        selectedRoom={selectedFriend?.id?.toString()}
+        selectedRoom={selectedFriend?.id}
+        onRefreshRooms={fetchRooms}
       />
 
       {activeView === "friends" && (
         <FriendsView 
              onChatSelect={(friend) => {
-                 setSelectedFriend(friend);
+                 setSelectedFriend({ ...friend, id: `dm_${friend.id}`, originalId: friend.id, type: 'dm' });
                  setActiveView('rooms'); 
              }}
         />
@@ -221,6 +259,15 @@ function App() {
           onLogout={handleLogout}
         />
       )}
+
+      <ConfirmModal 
+          isOpen={modal.isOpen}
+          title={modal.title}
+          message={modal.message}
+          type={modal.type}
+          onConfirm={modal.onConfirm}
+          onClose={() => setModal(prev => ({ ...prev, isOpen: false }))}
+      />
     </div>
   );
 }
