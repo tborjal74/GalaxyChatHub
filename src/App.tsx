@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { AuthPage } from "./components/authPage";
+import { AuthPage } from "./components/AuthPage";
 import { Sidebar } from "./components/sideBar";
 import { FriendsView } from "./components/FriendsView";
 import { ChatArea } from "./components/ChatArea";

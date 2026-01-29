@@ -8,6 +8,7 @@ import userRoutes from './routes/userRoutes.js';
 import authRoutes from './routes/authRoutes.js';
 import messageRoutes from './routes/messageRoutes.js';
 import friendRoutes from './routes/friendRoutes.js';
+import roomRoutes from './routes/roomRoutes.js';
 import { connectDatabase } from './database/database.js';
 import path from "path";
 import { fileURLToPath } from "url";
@@ -90,6 +91,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/messages', messageRoutes);
 app.use('/api/friends', friendRoutes);
+app.use('/api/rooms', roomRoutes);
 
 
 // Start server

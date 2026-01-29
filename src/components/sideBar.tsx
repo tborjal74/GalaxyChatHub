@@ -1,9 +1,9 @@
 import { Users, Hash, Settings, LogOut, UserPlus, MessageCircle, Plus } from 'lucide-react';
-import { Avatar, AvatarFallback } from '../components/ui/avatar';
-import { Button } from '../components/ui/button';
-import { ScrollArea } from '../components/ui/scroll-area';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '../components/ui/dialog';
-import { Input } from '../components/ui/input';
+import { Avatar, AvatarFallback } from './ui/avatar';
+import { Button } from './ui/button';
+import { ScrollArea } from './ui/scroll-area';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from './ui/dialog';
+import { Input } from './ui/input';
 // import { label } from '../components/ui/label';
 import { useEffect, useState } from 'react';
 
@@ -38,13 +38,17 @@ export function Sidebar({
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [newRoomName, setNewRoomName] = useState('');
 
-  const handleCreateRoom = () => {
-    if (newRoomName.trim() && onCreateRoom) {
-      onCreateRoom(newRoomName.trim());
-      setNewRoomName('');
-      setIsCreateDialogOpen(false);
-    }
-  };
+const handleCreateRoom = async () => {
+  if (newRoomName.trim()) {
+    await fetch('/rooms', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: newRoomName.trim(), isPrivate: false })
+    });
+    setNewRoomName('');
+    setIsCreateDialogOpen(false);
+  }
+};
 
   return (
     <div className="w-60 bg-sidebar border-r border-sidebar-border flex flex-col h-screen">
