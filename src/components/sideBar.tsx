@@ -4,6 +4,7 @@ import { Button } from './ui/button'
 import { ScrollArea } from './ui/scroll-area';
 import { useState } from 'react';
 import { CreateRoomModal } from './CreateRoomModal';
+import { API_URL } from '../config';
 
 interface SidebarProps {
   currentUser: { username: string; email: string };
@@ -94,7 +95,7 @@ export function Sidebar({
               >
                 {room.type === 'dm' ? (
                      room.avatarUrl ? 
-                        <img src={`http://localhost:3000${room.avatarUrl}`} className="w-4 h-4 mr-2 rounded-full object-cover" /> 
+                        <img src={room.avatarUrl.startsWith('http') ? room.avatarUrl : `${API_URL}${room.avatarUrl}`} className="w-4 h-4 mr-2 rounded-full object-cover" /> 
                         : <Users className="w-4 h-4 mr-2" />
                 ) : (
                     <Hash className="w-4 h-4 mr-2" />

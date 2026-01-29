@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { ConfirmModal } from './ui/confirm-modal';
+import { API_URL } from '../config';
 
 interface Friend {
   id: number;
@@ -21,7 +22,7 @@ export function FriendsView({ onChatSelect }: FriendsViewProps) {
   const token = localStorage.getItem('token');
 
   const fetchFriends = async () => {
-    const res = await fetch('http://localhost:3000/api/friends', {
+    const res = await fetch(`${API_URL}/api/friends`, {
         headers: { Authorization: `Bearer ${token}` }
     });
     const data = await res.json();
@@ -29,7 +30,7 @@ export function FriendsView({ onChatSelect }: FriendsViewProps) {
   };
 
   const fetchRequests = async () => {
-    const res = await fetch('http://localhost:3000/api/friends/requests', {
+    const res = await fetch(`${API_URL}/api/friends/requests`, {
         headers: { Authorization: `Bearer ${token}` }
     });
     const data = await res.json();
@@ -59,7 +60,7 @@ export function FriendsView({ onChatSelect }: FriendsViewProps) {
       }
 
       try {
-          const res = await fetch('http://localhost:3000/api/friends/request', {
+          const res = await fetch(`${API_URL}/api/friends/request`, {
               method: 'POST',
               headers: { 
                 'Content-Type': 'application/json',
@@ -100,9 +101,9 @@ export function FriendsView({ onChatSelect }: FriendsViewProps) {
   };
 
   const acceptRequest = async (requestId: number) => {
-    await fetch('http://localhost:3000/api/friends/accept', {
+    await fetch(`${API_URL}/api/friends/accept`, {
         method: 'POST',
-        headers: { 
+        headers: {  
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token}` 
         },

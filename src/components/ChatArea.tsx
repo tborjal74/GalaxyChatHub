@@ -6,6 +6,7 @@ import { SendHorizontal, Trash2, ArrowLeft, LogOut, UserPlus, Users } from "luci
 import { ConfirmModal } from "./ui/confirm-modal";
 import { AddMemberDialog } from "./AddMemberDialog";
 import { MembersListModal } from "./MembersListModal";
+import { API_URL } from "../config";
 
 export function ChatArea({ currentUserId, selectedFriend, onMessageSent, isConnected, onBack }: any) {
   const [messages, setMessages] = useState<any[]>([]);
@@ -59,8 +60,8 @@ export function ChatArea({ currentUserId, selectedFriend, onMessageSent, isConne
 
     // Fetch History
     const fetchUrl = isRoomType 
-        ? `http://localhost:3000/api/rooms/${fId}/messages`
-        : `http://localhost:3000/api/messages/${fId}`;
+        ? `${API_URL}/api/rooms/${fId}/messages`
+        : `${API_URL}/api/messages/${fId}`;
 
     fetch(fetchUrl, {
        headers: { 'Authorization': `Bearer ${token}` }
@@ -166,8 +167,8 @@ export function ChatArea({ currentUserId, selectedFriend, onMessageSent, isConne
      try {
         const token = localStorage.getItem('token');
         const url = isRoom 
-          ? `http://localhost:3000/api/rooms/${friendId}`
-          : `http://localhost:3000/api/messages/${friendId}`;
+          ? `${API_URL}/api/rooms/${friendId}`
+          : `${API_URL}/api/messages/${friendId}`;
 
         const res = await fetch(url, {
             method: 'DELETE',
@@ -226,7 +227,7 @@ export function ChatArea({ currentUserId, selectedFriend, onMessageSent, isConne
   const confirmLeave = async () => {
        try {
            const token = localStorage.getItem('token');
-           const res = await fetch(`http://localhost:3000/api/rooms/${friendId}/leave`, {
+           const res = await fetch(`${API_URL}/api/rooms/${friendId}/leave`, {
                method: 'POST',
                headers: { Authorization: `Bearer ${token}` }
            });

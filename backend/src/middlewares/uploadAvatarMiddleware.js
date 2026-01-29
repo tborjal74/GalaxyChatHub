@@ -1,36 +1,22 @@
 import multer from "multer";
-import path from "path";
-import fs from "fs";
+import { v2 as cloudinary } from "cloudinary";
+import { CloudinaryStorage } from "multer-storage-cloudinary";
 
-const uploadDir = "backend/src/uploads/avatars";
+// Configure Cloudinary
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
+});
 
-// Ensure folder exists
-if (!fs.existsSync(uploadDir)) {
-  fs.mkdirSync(uploadDir, { recursive: true });
-}
-
-const storage = multer.diskStorage({
-  destination: (_, __, cb) => {
-    cb(null, uploadDir);
-  },
-  filename: (req, file, cb) => {
-    const ext = path.extname(file.originalname);
-    cb(null, `avatar-${req.user.userId}${ext}`);
+// Configure Storage
+const storage = new CloudinaryStorage({
+  cloudinary: cloudinary,
+  params: {
+    folder: "avatars",
+    allowed_formats: ["jpg", "png", "jpeg", "webp"],
+    transformation: [{ width: 500, height: 500, crop: "limit" }],
   },
 });
 
-const fileFilter = (_, file, cb) => {
-  if (!file.mimetype.startsWith("image/")) {
-    cb(new Error("Only images are allowed"), false);
-  } else {
-    cb(null, true);
-  }
-};
-
-export const uploadAvatar = multer({
-  storage,
-  fileFilter,
-  limits: {
-    fileSize: 2 * 1024 * 1024, // 2MB
-  },
-});
+export const uploadAvatar = multer({ storage });

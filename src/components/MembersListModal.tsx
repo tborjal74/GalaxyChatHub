@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Button } from "./ui/button";
 import { Avatar, AvatarFallback } from "./ui/avatar";
 import { X, User } from "lucide-react";
+import { API_URL } from "../config";
 
 interface MembersListModalProps {
   isOpen: boolean;
@@ -21,7 +22,7 @@ export function MembersListModal({ isOpen, onClose, roomId }: MembersListModalPr
   const fetchMembers = async () => {
     const token = localStorage.getItem("token");
     try {
-      const res = await fetch(`http://localhost:3000/api/rooms/${roomId}/members`, {
+      const res = await fetch(`${API_URL}/api/rooms/${roomId}/members`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       const data = await res.json();

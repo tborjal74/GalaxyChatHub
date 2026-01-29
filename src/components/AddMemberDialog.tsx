@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Button } from "./ui/button";
 import { Avatar, AvatarFallback } from "./ui/avatar";
 import { X, Plus } from "lucide-react";
+import { API_URL } from "../config";
 
 interface AddMemberModalProps {
   isOpen: boolean;
@@ -25,8 +26,8 @@ export function AddMemberDialog({ isOpen, onClose, roomId, onAdded }: AddMemberM
     const token = localStorage.getItem("token");
     try {
       const [friendsRes, membersRes] = await Promise.all([
-          fetch("http://localhost:3000/api/friends", { headers: { Authorization: `Bearer ${token}` } }),
-          fetch(`http://localhost:3000/api/rooms/${roomId}/members`, { headers: { Authorization: `Bearer ${token}` } })
+          fetch(`${API_URL}/api/friends`, { headers: { Authorization: `Bearer ${token}` } }),
+          fetch(`${API_URL}/api/rooms/${roomId}/members`, { headers: { Authorization: `Bearer ${token}` } })
       ]);
       
       const friendsData = await friendsRes.json();
@@ -45,7 +46,7 @@ export function AddMemberDialog({ isOpen, onClose, roomId, onAdded }: AddMemberM
       setLoading(true);
       const token = localStorage.getItem("token");
       try {
-          const res = await fetch(`http://localhost:3000/api/rooms/${roomId}/members`, {
+          const res = await fetch(`${API_URL}/api/rooms/${roomId}/members`, {
               method: 'POST',
               headers: { 
                   'Content-Type': 'application/json',

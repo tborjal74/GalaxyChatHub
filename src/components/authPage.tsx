@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Input } from "./ui/input";
 import { Card } from "./ui/card";
+import { API_URL } from "../config";
 
 interface AuthPageProps {
   onLogin: (username: string, email: string) => void;
@@ -41,12 +42,12 @@ export function AuthPage({ onLogin }: AuthPageProps) {
     setError(null);
     setLoading(true);
 
-    const API_URL = "http://localhost:3000/api/auth";
+    const AUTH_URL = `${API_URL}/api/auth`;
 
     try {
       if (isLogin) {
         // Handle Login
-        const response = await fetch(`${API_URL}/login`, {
+        const response = await fetch(`${AUTH_URL}/login`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ email, password }),
@@ -70,7 +71,7 @@ export function AuthPage({ onLogin }: AuthPageProps) {
           throw new Error("Passwords do not match!");
         }
 
-        const response = await fetch(`${API_URL}/register`, {
+        const response = await fetch(`${AUTH_URL}/register`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({

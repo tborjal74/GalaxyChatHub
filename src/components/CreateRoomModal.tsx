@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
+import { API_URL } from "../config";
 
 interface Friend {
   id: number;
@@ -31,7 +32,7 @@ export function CreateRoomModal({ isOpen, onClose, onRoomCreated }: CreateRoomMo
   const fetchFriends = async () => {
     const token = localStorage.getItem("token");
     try {
-      const res = await fetch("http://localhost:3000/api/friends", {
+      const res = await fetch(`${API_URL}/api/friends`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       const data = await res.json();
@@ -49,7 +50,7 @@ export function CreateRoomModal({ isOpen, onClose, onRoomCreated }: CreateRoomMo
     const token = localStorage.getItem("token");
 
     try {
-      const res = await fetch("http://localhost:3000/api/rooms", {
+      const res = await fetch(`${API_URL}/api/rooms`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
