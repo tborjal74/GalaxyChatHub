@@ -1,10 +1,10 @@
 import { useEffect, useState } from 'react';
 
 interface Friend {
-  id: number;
+  id: string;
   username: string;
   avatarUrl: string;
-  status: string;
+  status: "online" | "offline";
 }
 
 interface FriendsViewProps {
