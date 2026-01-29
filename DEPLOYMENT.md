@@ -99,11 +99,11 @@ If you want to deploy a specific branch (e.g., `dev` or `staging`) as your main 
     *   Select **GitHub** and authorize if needed.
     *   Pick your `GalaxyChatHub` repository.
 
-3.  **Configure Build Settings**:
-    *   **Branch to deploy**: By default, this is `main`. **Click the dropdown and select your desired branch** (e.g., `staging`, `dev`, or `feature/login`).
+3.  **Configure Build Settings (Vite Project)**:
+    *   **Base directory**: `.` (Leave empty or entering a dot is fine - since `package.json` is in the root)
     *   **Build command**: `npm run build`
     *   **Publish directory**: `dist`
-    *   *Note: If you are using a monorepo or subdirectory, ensure "Base directory" is set correctly (or leave empty for root).*
+    *   **Branch to deploy**: Select your desired branch (e.g., `main` or `feature-branch`).
 
 4.  **Environment Variables**:
     *   Click **"Add environment variables"**.
