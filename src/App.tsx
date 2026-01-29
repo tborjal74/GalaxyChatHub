@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { AuthPage } from "./components/AuthPage";
-import { Sidebar } from "./components/Sidebar";
+import { Sidebar } from "./components/AppSidebar";
 import "./App.css";
 import { ProfileView } from "./components/profile/ProfileView";
 import { FriendsView } from "./components/FriendsView";
