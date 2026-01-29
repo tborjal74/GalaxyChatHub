@@ -1,188 +1,419 @@
-import { useEffect, useState, useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
+import { Hash, User, Send } from "lucide-react";
+import { ScrollArea } from "../components/ui/scroll-area";
+import { Input } from "../components/ui/input";
+import { Button } from "../components/ui/button";
+import { Avatar, AvatarFallback } from "../components/ui/avatar";
 import { socket } from "../socket";
-import { Avatar, AvatarFallback } from "./ui/avatar";
-import { Button } from "./ui/button";
-import { SendHorizontal, Trash2 } from "lucide-react";
 
-export function ChatArea({ currentUserId, selectedFriend, onMessageSent, isConnected }: any) {
-  const [messages, setMessages] = useState<any[]>([]);
-  const [inputText, setInputText] = useState("");
-  const scrollRef = useRef<HTMLDivElement>(null);
+type Message = {
+  id: string;
+  senderId: string;
+  senderName: string;
+  receiverId?: string;
+  room?: string;
+  content: string;
+  timestamp: string | Date;
+};
 
-  // Auto-scroll to bottom
+type Participant = {
+  id: string;
+  username: string;
+  status: "online" | "offline" | string;
+};
+
+interface SelectedFriend {
+  id: string;
+  username: string;
+}
+
+interface ChatAreaProps {
+  currentUserId: string;
+  selectedFriend?: SelectedFriend | null;
+  onMessageSent?: () => void;
+  isConnected?: boolean;
+  chatType: "room" | "dm";
+  chatName: string;
+  participants?: Participant[];
+  // optional initial messages prop — if you prefer external control
+  initialMessages?: Message[];
+}
+
+export function ChatArea({
+  currentUserId,
+  selectedFriend = null,
+  onMessageSent,
+  isConnected = true,
+  chatType,
+  chatName,
+  participants = [],
+  initialMessages = [],
+}: ChatAreaProps) {
+  const [messages, setMessages] = useState<Message[]>(initialMessages);
+  const [messageInput, setMessageInput] = useState("");
+  const scrollRef = useRef<HTMLDivElement | null>(null);
+
+  // Auto-scroll to bottom when messages change
   useEffect(() => {
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
   }, [messages]);
 
-  // 1. Join Room on select
+  // Join room or DM and fetch history when selection or chatName changes
   useEffect(() => {
-    if (!selectedFriend) return;
+    // Clear messages when switching chats
+    setMessages([]);
 
-    // Join the 'room' for these two users
-    socket.emit("join_dm", { currentUserId, targetUserId: selectedFriend.id });
+    if (chatType === "dm") {
+      if (!selectedFriend) return;
 
-    // Fetch existing history via HTTP API
-    const fetchHistory = async () => {
-      try {
-        const token = localStorage.getItem('token');
-        const response = await fetch(`http://localhost:3000/api/messages/${selectedFriend.id}`, {
-           headers: {
-             'Authorization': `Bearer ${token}`
-           }
-        });
-        const data = await response.json();
-        if (data.success) {
-           setMessages(data.data);
+      // Join DM room on server (if your server uses a DM room)
+      socket.emit("join_dm", { currentUserId, targetUserId: selectedFriend.id });
+
+      // Fetch DM history
+      const fetchHistory = async () => {
+        try {
+          const token = localStorage.getItem("token");
+          const res = await fetch(
+            `http://localhost:3000/api/messages/${selectedFriend.id}`,
+            {
+              headers: { Authorization: `Bearer ${token}` },
+            }
+          );
+          const data = await res.json();
+          if (data.success) {
+            // Normalize timestamps to strings
+            setMessages(data.data || []);
+          }
+        } catch (err) {
+          console.error("Failed to fetch DM history", err);
         }
-      } catch (err) {
-        console.error("Failed to fetch history", err);
+      };
+
+      fetchHistory();
+
+      // cleanup listeners for DM handled in separate effect
+      return () => {
+        socket.off("receive_dm");
+      };
+    } else {
+      // room
+      // Join the room by name
+      socket.emit("join_room", { room: chatName });
+
+      // Fetch room history
+      const fetchRoomHistory = async () => {
+        try {
+          const token = localStorage.getItem("token");
+          const res = await fetch(`http://localhost:3000/api/messages/room/${encodeURIComponent(chatName)}`, {
+            headers: { Authorization: `Bearer ${token}` },
+          });
+          const data = await res.json();
+          if (data.success) {
+            setMessages(data.data || []);
+          }
+        } catch (err) {
+          console.error("Failed to fetch room history", err);
+        }
+      };
+
+      fetchRoomHistory();
+
+      return () => {
+        socket.off("receive_room");
+      };
+    }
+  }, [chatType, chatName, selectedFriend?.id, currentUserId]);
+
+  // Listen for incoming DM messages
+  useEffect(() => {
+    if (chatType !== "dm") return;
+
+    const handler = (message: Message) => {
+      const isRelated =
+        (message.senderId === currentUserId && message.receiverId === selectedFriend?.id) ||
+        (message.senderId === selectedFriend?.id && message.receiverId === currentUserId);
+
+      if (isRelated) {
+        setMessages((prev) => {
+          if (prev.some((m) => m.id === message.id)) return prev;
+          return [...prev, message];
+        });
       }
     };
-    
-    fetchHistory();
-    
-    // Cleanup listeners to avoid duplicates
-    return () => {
-      socket.off("receive_dm");
-    };
-  }, [selectedFriend?.id, currentUserId]);
 
-  // 2. Listen for incoming messages
-  useEffect(() => {
-    const handler = (message: any) => {
-        // Strict check
-        const isRelated = 
-            (message.senderId === currentUserId && message.receiverId === selectedFriend?.id) ||
-            (message.senderId === selectedFriend?.id && message.receiverId === currentUserId);
-
-        if (isRelated) {
-             setMessages((prev) => {
-                 // Prevent duplicates
-                 if(prev.some(m => m.id === message.id)) return prev;
-                 return [...prev, message];
-             });
-        }
-    };
-    
     socket.on("receive_dm", handler);
-    return () => { 
-        socket.off("receive_dm", handler);
+    return () => {
+      socket.off("receive_dm", handler);
     };
-  }, [selectedFriend, currentUserId]);
+  }, [chatType, selectedFriend, currentUserId]);
 
-  // 3. Send Message
-  const handleSend = () => {
-    if (!inputText.trim() || !selectedFriend) return;
+  // Listen for incoming room messages
+  useEffect(() => {
+    if (chatType !== "room") return;
 
-    // Emit to server
-    socket.emit("send_dm", {
-      senderId: currentUserId,
-      receiverId: selectedFriend.id,
-      content: inputText
-    });
-    
-    if(onMessageSent) onMessageSent();
+    const handler = (message: Message) => {
+      // Only append messages for this room
+      if (message.room === chatName) {
+        setMessages((prev) => {
+          if (prev.some((m) => m.id === message.id)) return prev;
+          return [...prev, message];
+        });
+      }
+    };
 
-    setInputText("");
+    socket.on("receive_room", handler);
+    return () => {
+      socket.off("receive_room", handler);
+    };
+  }, [chatType, chatName]);
+
+  // Send message (handles both DM and room)
+  const handleSendMessage = () => {
+    const trimmed = messageInput.trim();
+    if (!trimmed) return;
+
+    if (chatType === "dm") {
+      if (!selectedFriend) return;
+
+      const payload = {
+        senderId: currentUserId,
+        receiverId: selectedFriend.id,
+        content: trimmed,
+      };
+
+      socket.emit("send_dm", payload);
+
+      // Optimistic UI append (server will also send back receive_dm)
+      const optimistic: Message = {
+        id: `temp-${Date.now()}`,
+        senderId: currentUserId,
+        senderName: "You",
+        receiverId: selectedFriend.id,
+        content: trimmed,
+        timestamp: new Date().toISOString(),
+      };
+      setMessages((prev) => [...prev, optimistic]);
+    } else {
+      // room
+      const payload = {
+        senderId: currentUserId,
+        room: chatName,
+        content: trimmed,
+      };
+
+      socket.emit("send_room", payload);
+
+      const optimistic: Message = {
+        id: `temp-${Date.now()}`,
+        senderId: currentUserId,
+        senderName: "You",
+        room: chatName,
+        content: trimmed,
+        timestamp: new Date().toISOString(),
+      };
+      setMessages((prev) => [...prev, optimistic]);
+    }
+
+    if (onMessageSent) onMessageSent();
+    setMessageInput("");
   };
 
-  const handleDeleteConversation = async () => {
-    if(!selectedFriend) return;
-    if(!confirm(`Are you sure you want to delete the conversation with ${selectedFriend.username}? This cannot be undone.`)) return;
-
-    try {
-        const token = localStorage.getItem('token');
-        const res = await fetch(`http://localhost:3000/api/messages/${selectedFriend.id}`, {
-            method: 'DELETE',
-            headers: { Authorization: `Bearer ${token}` }
-        });
-        
-        const data = await res.json();
-        if(data.success) {
-            setMessages([]); // Clear local UI
-            if(onMessageSent) onMessageSent(); // Triggers refresh of Sidebar list
-            alert("Conversation deleted.");
-        } else {
-            alert("Failed to delete.");
-        }
-    } catch(e) {
-        console.error(e);
-        alert("Error occurred.");
+  const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      handleSendMessage();
     }
   };
 
-  if(!selectedFriend) {
-      return (
-        <div className="flex-1 flex items-center justify-center text-muted-foreground bg-[#313338]">
-             <div className="text-center">
-                <p>Select a friend to start chatting</p>
-            </div>
+  // Delete conversation (DM only)
+  const handleDeleteConversation = async () => {
+    if (chatType !== "dm" || !selectedFriend) return;
+    if (!confirm(`Are you sure you want to delete the conversation with ${selectedFriend.username}? This cannot be undone.`)) return;
+
+    try {
+      const token = localStorage.getItem("token");
+      const res = await fetch(`http://localhost:3000/api/messages/${selectedFriend.id}`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = await res.json();
+      if (data.success) {
+        setMessages([]);
+        if (onMessageSent) onMessageSent();
+        alert("Conversation deleted.");
+      } else {
+        alert("Failed to delete.");
+      }
+    } catch (e) {
+      console.error(e);
+      alert("Error occurred.");
+    }
+  };
+
+  if (chatType === "dm" && !selectedFriend) {
+    return (
+      <div className="flex-1 flex items-center justify-center text-muted-foreground bg-[#313338]">
+        <div className="text-center">
+          <p>Select a friend to start chatting</p>
         </div>
-      );
+      </div>
+    );
   }
 
   return (
-    <div className="flex-1 flex flex-col h-full bg-[#313338] text-gray-100">
-       <div className="h-14 border-b border-[#26272D] flex items-center px-4 shadow-sm bg-[#313338] justify-between">
-        <div className="flex items-center gap-3">
-             <Avatar className="w-8 h-8">
-                <AvatarFallback className="bg-purple-600 text-white text-xs">
-                    {selectedFriend.username?.[0]?.toUpperCase()}
-                </AvatarFallback>
-             </Avatar>
-            <div>
-                <div className="font-bold text-sm text-gray-100 flex items-center gap-2">
-                    {selectedFriend.username}
-                    <span 
-                      className={`inline-block w-2 h-2 rounded-full ${isConnected ? 'bg-green-500' : 'bg-red-500'}`} 
-                      title={isConnected ? "Connected" : "Disconnected"} 
-                    />
-                </div>
+    <div className="flex-1 flex h-screen">
+      {/* Main Chat Area */}
+      <div className="flex-1 flex flex-col bg-background">
+        {/* Chat Header */}
+        <div className="h-12 px-4 border-b border-border flex items-center gap-2">
+          {chatType === "room" ? (
+            <Hash className="w-5 h-5 text-muted-foreground" />
+          ) : (
+            <User className="w-5 h-5 text-muted-foreground" />
+          )}
+          <span className="text-white">{chatName}</span>
+
+          {/* Optional delete button for DM */}
+          {chatType === "dm" && selectedFriend && (
+            <div className="ml-auto flex items-center gap-2">
+              <button
+                onClick={handleDeleteConversation}
+                className="text-xs text-muted-foreground hover:text-white"
+                title="Delete conversation"
+              >
+                Delete
+              </button>
             </div>
+          )}
         </div>
-        <Button variant="ghost" size="icon" className="text-gray-400 hover:text-red-500 hover:bg-transparent" onClick={handleDeleteConversation} title="Delete Conversation">
-            <Trash2 className="w-5 h-5" />
-        </Button>
+
+        {/* Messages */}
+        <div className="flex-1 overflow-hidden">
+          <ScrollArea className="h-full">
+            <div ref={scrollRef} className="p-4 space-y-4">
+              {messages.length === 0 ? (
+                <div className="flex flex-col items-center justify-center h-full text-center py-12">
+                  <div className="w-16 h-16 bg-secondary rounded-full flex items-center justify-center mb-4">
+                    {chatType === "room" ? (
+                      <Hash className="w-8 h-8 text-muted-foreground" />
+                    ) : (
+                      <User className="w-8 h-8 text-muted-foreground" />
+                    )}
+                  </div>
+                  <h3 className="text-white mb-2">
+                    {chatType === "room"
+                      ? `Welcome to #${chatName}!`
+                      : `This is the beginning of your conversation`}
+                  </h3>
+                  <p className="text-muted-foreground text-sm max-w-md">
+                    {chatType === "room"
+                      ? "This is the start of the conversation in this channel."
+                      : "Send a message to start the conversation."}
+                  </p>
+                </div>
+              ) : (
+                messages.map((message) => (
+                  <MessageItem
+                    key={message.id}
+                    message={{
+                      ...message,
+                      // ensure timestamp is a Date for rendering
+                      timestamp:
+                        typeof message.timestamp === "string"
+                          ? new Date(message.timestamp)
+                          : message.timestamp,
+                    }}
+                    isOwn={message.senderId === currentUserId}
+                  />
+                ))
+              )}
+            </div>
+          </ScrollArea>
+        </div>
+
+        {/* Message Input */}
+        <div className="p-4 border-t border-border">
+          <div className="flex gap-2">
+            <Input
+              type="text"
+              placeholder={`Message ${chatType === "room" ? "#" : "@"}${chatName}`}
+              value={messageInput}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setMessageInput(e.target.value)}
+              onKeyPress={handleKeyPress}
+              className="bg-input-background border-input text-white placeholder:text-muted-foreground"
+            />
+            <Button
+              onClick={handleSendMessage}
+              disabled={!messageInput.trim() || !isConnected}
+              className="bg-primary hover:bg-primary/90 text-white"
+            >
+              <Send className="w-4 h-4" />
+            </Button>
+          </div>
+        </div>
       </div>
 
-       <div className="flex-1 overflow-y-auto p-4 space-y-4" ref={scrollRef}>
-         {messages.map((msg, idx) => {
-            const isMe = msg.senderId === currentUserId;
-            return (
-           <div key={msg.id || idx} className={`flex gap-3 ${isMe ? "flex-row-reverse" : ""}`}>
-             <Avatar className="w-8 h-8 mt-1">
-                <AvatarFallback className={`${isMe ? 'bg-blue-600' : 'bg-purple-600'} text-white text-[10px]`}>
-                    {(msg.sender?.username || (isMe ? "Me" : selectedFriend.username)).substring(0,2).toUpperCase()}
-                </AvatarFallback>
-             </Avatar>
-             
-             <div className={`max-w-[70%] rounded-lg p-3 text-sm ${
-                 isMe 
-                 ? "bg-blue-600 text-white rounded-br-none" 
-                 : "bg-[#2B2D31] text-gray-100 rounded-bl-none"
-             }`}>
-                {msg.content}
-             </div>
-           </div>
-         )})}
-       </div>
+      {/* Participants Sidebar (for rooms) */}
+      {chatType === "room" && participants.length > 0 && (
+        <div className="w-60 bg-sidebar border-l border-sidebar-border">
+          <ScrollArea className="h-full">
+            <div className="p-4">
+              <div className="text-xs uppercase text-muted-foreground mb-3">
+                Members — {participants.length}
+              </div>
+              <div className="space-y-2">
+                {participants.map((participant) => (
+                  <div key={participant.id} className="flex items-center gap-2">
+                    <Avatar className="w-8 h-8">
+                      <AvatarFallback className="bg-gradient-to-br from-purple-500 to-violet-600 text-white text-xs">
+                        {participant.username.charAt(0).toUpperCase()}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="flex-1 min-w-0">
+                      <div className="text-sm text-white truncate">{participant.username}</div>
+                      <div className="text-xs text-muted-foreground flex items-center gap-1">
+                        <span
+                          className={`w-2 h-2 rounded-full ${
+                            participant.status === "online" ? "bg-green-500" : "bg-gray-500"
+                          }`}
+                        ></span>
+                        {participant.status}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </ScrollArea>
+        </div>
+      )}
+    </div>
+  );
+}
 
-       <div className="p-4 bg-[#313338]">
-         <div className="bg-[#383A40] rounded-lg flex items-center px-4 py-2 gap-2">
-             <input 
-               className="bg-transparent flex-1 outline-none text-gray-200 placeholder-gray-400 text-sm"
-               placeholder={`Message @${selectedFriend.username}`}
-               value={inputText} 
-               onChange={(e) => setInputText(e.target.value)}
-               onKeyDown={(e) => e.key === 'Enter' && handleSend()}
-             />
-             <Button variant="ghost" size="icon" onClick={handleSend} className="text-gray-400 hover:text-white hover:bg-transparent">
-                 <SendHorizontal className="w-5 h-5" />
-             </Button>
-         </div>
-       </div>
+function MessageItem({ message, isOwn }: { message: Message & { timestamp: Date }; isOwn: boolean }) {
+  return (
+    <div className="flex gap-3 hover:bg-secondary/20 px-2 py-1 rounded">
+      <Avatar className="w-10 h-10">
+        <AvatarFallback className="bg-gradient-to-br from-purple-500 to-violet-600 text-white">
+          {message.senderName?.charAt(0)?.toUpperCase() ?? "?"}
+        </AvatarFallback>
+      </Avatar>
+      <div className="flex-1 min-w-0">
+        <div className="flex items-baseline gap-2">
+          <span className={`text-sm ${isOwn ? "text-primary" : "text-white"}`}>
+            {message.senderName}
+          </span>
+          <span className="text-xs text-muted-foreground">
+            {message.timestamp instanceof Date
+              ? message.timestamp.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
+              : String(message.timestamp)}
+          </span>
+        </div>
+        <div className="text-white break-words">{message.content}</div>
+      </div>
     </div>
   );
 }
