@@ -1,6 +1,6 @@
 import { Users, Hash, Settings, LogOut, BotMessageSquare, Plus } from 'lucide-react';
 import { Avatar, AvatarFallback } from './ui/avatar';
-import { Button } from './ui/button'
+import { Button } from './ui/button';
 import { ScrollArea } from './ui/scroll-area';
 import { useState } from 'react';
 import { CreateRoomModal } from './CreateRoomModal';
@@ -16,6 +16,7 @@ interface SidebarProps {
   selectedRoom: string | null;
   onRefreshRooms?: () => void;
 }
+
 
 export function Sidebar({
   currentUser,
@@ -41,16 +42,16 @@ export function Sidebar({
       {/* Server Icon Section */}
       <div className="flex items-center gap-3 p-4 border-b border-sidebar-border">
         <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-violet-600 rounded-full flex items-center justify-center">
-          <BotMessageSquare className="w-5 h-5 text-white" />
+          <MessageCircle className="w-5 h-5 text-white" />
         </div>
-        <span className="text-white">Galaxy Chat Hub</span>
+        <span className="text-white">GalaxyChatHub</span>
       </div>
 
       {/* Navigation */}
       <div className="p-2 border-b border-sidebar-border">
         <Button
           variant={activeView === 'friends' ? 'secondary' : 'ghost'}
-          className="w-full justify-start text-sidebar-foreground hover:bg-sidebar-accent cursor-pointer"
+          className="w-full justify-start text-sidebar-foreground hover:bg-sidebar-accent"
           onClick={() => onViewChange('friends')}
         >
           <Users className="w-4 h-4 mr-2" />
@@ -58,7 +59,7 @@ export function Sidebar({
         </Button>
         <Button
           variant={activeView === 'rooms' ? 'secondary' : 'ghost'}
-          className="w-full justify-start text-sidebar-foreground hover:bg-sidebar-accent mt-1 cursor-pointer"
+          className="w-full justify-start text-sidebar-foreground hover:bg-sidebar-accent mt-1"
           onClick={() => onViewChange('rooms')}
         >
           <Hash className="w-4 h-4 mr-2" />
@@ -112,6 +113,58 @@ export function Sidebar({
         </ScrollArea>
       )}
 
+      {/* Direct Messages List */}
+      {activeView === 'friends' && (
+        <ScrollArea className="flex-1">
+          <div className="p-2">
+            <div className="flex items-center justify-between px-2 py-1">
+              <div className="text-xs uppercase text-muted-foreground">
+                Direct Messages
+              </div>
+            </div>
+            {friends.length > 0 ? (
+              friends.map((friend) => (
+                <Button
+                  key={friend.id}
+                  variant={selectedFriend === friend.id ? "secondary" : "ghost"}
+                  className="w-full justify-start text-sidebar-foreground hover:bg-sidebar-accent mt-1 h-auto py-2"
+                  onClick={() => onSelectFriend?.(friend.id)}
+                >
+                  <div className="flex items-center gap-2 w-full">
+                    <div className="relative">
+                      <Avatar className="w-8 h-8">
+                        <AvatarFallback className="bg-gradient-to-br from-purple-500 to-violet-600 text-white text-xs">
+                          {friend.username.charAt(0).toUpperCase()}
+                        </AvatarFallback>
+                      </Avatar>
+
+                      <span
+                        className={`absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-sidebar ${friend.status === "online" ? "bg-green-500" : "bg-gray-500"
+                          }`}
+                        aria-hidden="true"
+                      />
+                    </div>
+
+                    <span className="flex-1 text-left truncate">{friend.username}</span>
+
+                    {(friend.unreadMessages ?? 0) > 0 && (
+                      <span className="bg-primary text-white text-xs rounded-full px-2 py-0.5">
+                        {friend.unreadMessages}
+                      </span>
+                    )}
+                  </div>
+                </Button>
+              ))
+            ) : (
+              <div className="px-2 py-4 text-center text-muted-foreground text-sm">
+                No friends yet. Add some friends to start chatting!
+              </div>
+            )}
+
+            </div>
+        </ScrollArea>
+      )}
+
       {/* User Section */}
       <div className="p-3 bg-[#0a0a0f] border-t border-sidebar-border w-59 fixed bottom-0">
         <div className="flex items-center gap-2">
@@ -131,9 +184,9 @@ export function Sidebar({
             variant="ghost"
             size="icon"
             onClick={onLogout}
-            className="text-muted-foreground hover:text-white cursor-pointer"
+            className="text-muted-foreground hover:text-white"
           >
-            <LogOut className="w-4 h-4 " />
+            <LogOut className="w-4 h-4" />
           </Button>
         </div>
       </div>

@@ -6,9 +6,9 @@ const router = express.Router();
 
 router.use(isAuthenticated);
 
-router.get('/', getFriends);
-router.get('/requests', getFriendRequests);
-router.post('/request', sendFriendRequest);
-router.post('/accept', acceptFriendRequest);
+router.get('/', isAuthenticated, getFriends);
+router.get('/requests', isAuthenticated, getFriendRequests);
+router.post('/request', isAuthenticated, sendFriendRequest);
+router.post('/accept', isAuthenticated, acceptFriendRequest);
 
 export default router;

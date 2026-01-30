@@ -9,20 +9,51 @@ import { socket } from "./socket";
 import { ConfirmModal } from "./components/ui/confirm-modal";
 import { API_URL } from "./config";
 
+/**
+ * Types
+ */
 interface User {
   id: number;
   username: string;
   email: string;
   bio?: string;
-  status?: string;
   joinedDate: Date;
   avatarUrl?: string;
 }
 
+
+interface Friend {
+  id: string;
+  username: string;
+  avatarUrl?: string;
+  status: "online" | "offline";
+  unreadMessages?: number;   // optional
+}
+
+
+interface Room {
+  id: string;
+  name: string;
+  unread: number;
+}
+
+interface Message {
+  id: string;
+  senderId: string;
+  senderName: string;
+  content: string;
+  timestamp: Date | string;
+  room?: string;
+  receiverId?: string;
+}
+
+/**
+ * App component
+ */
 function App() {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [activeView, setActiveView] = useState<"friends" | "rooms" | "profile">(
-    "friends",
+    "friends"
   );
   const [isConnected, setIsConnected] = useState(socket.connected);
   const [selectedFriend, setSelectedFriend] = useState<any | null>(null);
@@ -34,23 +65,30 @@ function App() {
       selectedFriendRef.current = selectedFriend;
   }, [selectedFriend]);
 
-  // Restore session on mount
+  /**
+   * Restore session on mount
+   */
   useEffect(() => {
-    const storedUser = localStorage.getItem('user');
+    const storedUser = localStorage.getItem("user");
     if (storedUser) {
       try {
         const parsedUser = JSON.parse(storedUser);
-         // Ensure we have the minimal required fields
-         if(parsedUser.username && parsedUser.email) {
-            setCurrentUser({ ...parsedUser, joinedDate: new Date() });
-         }
+        if (parsedUser.username && parsedUser.email) {
+          setCurrentUser({
+            ...parsedUser,
+            joinedDate: parsedUser.createdAt ? new Date(parsedUser.createdAt) : new Date(),
+          });
+        }
       } catch (e) {
         console.error("Failed to parse stored user", e);
-        localStorage.removeItem('user');
+        localStorage.removeItem("user");
       }
     }
   }, []);
 
+  /**
+   * Load current user from API (if token present)
+   */
   const loadUser = async () => {
     const token = localStorage.getItem("token");
     if (!token) return;
@@ -76,12 +114,15 @@ function App() {
     loadUser();
   }, []);
 
+  /**
+   * Socket connection lifecycle and listeners
+   * - Keep hooks at top level (no nested hooks)
+   */
   useEffect(() => {
     function onConnect() {
       setIsConnected(true);
       console.log("Socket connected!");
     }
-
     function onDisconnect() {
       setIsConnected(false);
       console.log("Socket disconnected!");
@@ -110,8 +151,8 @@ function App() {
     socket.on("disconnect", onDisconnect);
     socket.on("room_deleted", onRoomDeleted);
 
-    // Connect only if we have a user (optional strategy)
-    if (currentUser) {
+    // Connect socket only when we have a current user
+    if (currentUser && !socket.connected) {
       socket.connect();
     }
 
@@ -123,7 +164,41 @@ function App() {
     };
   }, [currentUser]);
 
-  // Fetch Rooms (Conversations)
+  /**
+   * Fetch friends (top-level effect)
+   */
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    const fetchFriends = async () => {
+      if (!token) return;
+      try {
+        const res = await fetch("http://localhost:3000/api/friends", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        const data = await res.json();
+        if (data.success) {
+          // Normalize shape if needed
+          setFriends(
+            (data.data || []).map((f: any) => ({
+              id: String(f.id),
+              username: f.username,
+              avatarUrl: f.avatarUrl,
+              status: f.status === "online" ? "online" : "offline", // normalize
+              unreadMessages: f.unreadMessages ?? 0,
+            }))
+          );
+        }
+      } catch (err) {
+        console.error("Failed to fetch friends", err);
+      }
+    };
+
+    fetchFriends();
+  }, []);
+
+  /**
+   * Fetch rooms (conversations)
+   */
   const fetchRooms = async () => {
      if(!currentUser) return;
      const token = localStorage.getItem('token');
@@ -152,8 +227,8 @@ function App() {
   };
 
   useEffect(() => {
-     if(currentUser) fetchRooms();
-  }, [currentUser, activeView]); 
+    if (currentUser) fetchRooms();
+  }, [currentUser, activeView]);
 
   const handleLogin = () => {
     loadUser();
@@ -161,16 +236,17 @@ function App() {
 
   const handleLogout = () => {
     setCurrentUser(null);
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
     socket.disconnect();
   };
 
- const handleUpdateProfile = async (
-  updates: Partial<User> & { avatar?: File | null }
-) => {
-  const token = localStorage.getItem("token");
-  if (!token || !currentUser) return;
+  /**
+   * Profile update handler
+   */
+  const handleUpdateProfile = async (updates: Partial<User> & { avatar?: File | null }) => {
+    const token = localStorage.getItem("token");
+    if (!token || !currentUser) return;
 
   const formData = new FormData();
 
@@ -243,7 +319,7 @@ function App() {
              }}
         />
       )}
-      
+
       {activeView === "rooms" && (
         <ChatArea 
            currentUserId={JSON.parse(localStorage.getItem('user') || '{}').id} 
@@ -253,8 +329,7 @@ function App() {
            onBack={() => setSelectedFriend(undefined)}
         />
       )}
-      
-      {activeView === "profile" && (
+       {activeView === "profile" && (
         <ProfileView
           user={currentUser}
           onUpdateProfile={handleUpdateProfile}

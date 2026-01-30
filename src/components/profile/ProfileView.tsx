@@ -23,6 +23,7 @@ interface ProfileViewProps {
   onLogout: () => void;
 }
 
+
 export function ProfileView({
   user,
   onUpdateProfile,

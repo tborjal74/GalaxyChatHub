@@ -1,4 +1,9 @@
-import { useEffect, useState, useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
+import { Hash, User, Send } from "lucide-react";
+import { ScrollArea } from "../components/ui/scroll-area";
+import { Input } from "../components/ui/input";
+import { Button } from "../components/ui/button";
+import { Avatar, AvatarFallback } from "../components/ui/avatar";
 import { socket } from "../socket";
 import { Avatar, AvatarFallback } from "./ui/avatar";
 import { Button } from "./ui/button";
@@ -22,14 +27,14 @@ export function ChatArea({ currentUserId, selectedFriend, onMessageSent, isConne
   const isRoom = selectedFriend?.type === 'room';
   const friendId = selectedFriend?.originalId || selectedFriend?.id;
 
-  // Auto-scroll to bottom
+  // Auto-scroll to bottom when messages change
   useEffect(() => {
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
   }, [messages]);
 
-  // 1. Join Room on select
+  // Join room or DM and fetch history when selection or chatName changes
   useEffect(() => {
     if (!selectedFriend) return;
     const token = localStorage.getItem('token');
@@ -77,7 +82,7 @@ export function ChatArea({ currentUserId, selectedFriend, onMessageSent, isConne
     };
   }, [selectedFriend?.id, selectedFriend?.originalId, selectedFriend?.type, currentUserId]);
 
-  // 2. Listen for incoming messages
+  // Listen for incoming DM messages
   useEffect(() => {
     const dmHandler = (message: any) => {
         if (selectedFriend?.type !== 'dm' && !(!selectedFriend?.type)) return; // Only if DM or legacy
@@ -116,7 +121,7 @@ export function ChatArea({ currentUserId, selectedFriend, onMessageSent, isConne
         socket.off("receive_dm", dmHandler);
         socket.off("receive_room_message", roomHandler);
     };
-  }, [selectedFriend, currentUserId]);
+  }, [chatType, selectedFriend, currentUserId]);
 
   // 3. Send Message
   const handleSend = () => {
@@ -298,7 +303,24 @@ export function ChatArea({ currentUserId, selectedFriend, onMessageSent, isConne
                       title={isConnected ? "Connected" : "Disconnected"} 
                     />
                 </div>
+              ) : (
+                messages.map((message) => (
+                  <MessageItem
+                    key={message.id}
+                    message={{
+                      ...message,
+                      // ensure timestamp is a Date for rendering
+                      timestamp:
+                        typeof message.timestamp === "string"
+                          ? new Date(message.timestamp)
+                          : message.timestamp,
+                    }}
+                    isOwn={message.senderId === currentUserId}
+                  />
+                ))
+              )}
             </div>
+          </ScrollArea>
         </div>
 
         <div className="flex items-center gap-1">

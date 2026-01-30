@@ -3,10 +3,10 @@ import { ConfirmModal } from './ui/confirm-modal';
 import { API_URL } from '../config';
 
 interface Friend {
-  id: number;
+  id: string;
   username: string;
   avatarUrl: string;
-  status: string;
+  status: "online" | "offline";
 }
 
 interface FriendsViewProps {
