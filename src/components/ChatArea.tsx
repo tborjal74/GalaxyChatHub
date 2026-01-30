@@ -1,9 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
-import { Hash, User, Send } from "lucide-react";
-import { ScrollArea } from "../components/ui/scroll-area";
-import { Input } from "../components/ui/input";
-import { Button } from "../components/ui/button";
-import { Avatar, AvatarFallback } from "../components/ui/avatar";
+import { useEffect, useState, useRef } from "react";
 import { socket } from "../socket";
 import { Avatar, AvatarFallback } from "./ui/avatar";
 import { Button } from "./ui/button";
@@ -11,7 +6,6 @@ import { SendHorizontal, Trash2, ArrowLeft, LogOut, UserPlus, Users } from "luci
 import { ConfirmModal } from "./ui/confirm-modal";
 import { AddMemberDialog } from "./AddMemberDialog";
 import { MembersListModal } from "./MembersListModal";
-import { API_URL } from "../config";
 
 export function ChatArea({ currentUserId, selectedFriend, onMessageSent, isConnected, onBack }: any) {
   const [messages, setMessages] = useState<any[]>([]);
@@ -27,14 +21,14 @@ export function ChatArea({ currentUserId, selectedFriend, onMessageSent, isConne
   const isRoom = selectedFriend?.type === 'room';
   const friendId = selectedFriend?.originalId || selectedFriend?.id;
 
-  // Auto-scroll to bottom when messages change
+  // Auto-scroll to bottom
   useEffect(() => {
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
   }, [messages]);
 
-  // Join room or DM and fetch history when selection or chatName changes
+  // 1. Join Room on select
   useEffect(() => {
     if (!selectedFriend) return;
     const token = localStorage.getItem('token');
@@ -65,8 +59,8 @@ export function ChatArea({ currentUserId, selectedFriend, onMessageSent, isConne
 
     // Fetch History
     const fetchUrl = isRoomType 
-        ? `${API_URL}/api/rooms/${fId}/messages`
-        : `${API_URL}/api/messages/${fId}`;
+        ? `http://localhost:3000/api/rooms/${fId}/messages`
+        : `http://localhost:3000/api/messages/${fId}`;
 
     fetch(fetchUrl, {
        headers: { 'Authorization': `Bearer ${token}` }
@@ -82,7 +76,7 @@ export function ChatArea({ currentUserId, selectedFriend, onMessageSent, isConne
     };
   }, [selectedFriend?.id, selectedFriend?.originalId, selectedFriend?.type, currentUserId]);
 
-  // Listen for incoming DM messages
+  // 2. Listen for incoming messages
   useEffect(() => {
     const dmHandler = (message: any) => {
         if (selectedFriend?.type !== 'dm' && !(!selectedFriend?.type)) return; // Only if DM or legacy
@@ -121,7 +115,7 @@ export function ChatArea({ currentUserId, selectedFriend, onMessageSent, isConne
         socket.off("receive_dm", dmHandler);
         socket.off("receive_room_message", roomHandler);
     };
-  }, [chatType, selectedFriend, currentUserId]);
+  }, [selectedFriend, currentUserId]);
 
   // 3. Send Message
   const handleSend = () => {
@@ -172,8 +166,8 @@ export function ChatArea({ currentUserId, selectedFriend, onMessageSent, isConne
      try {
         const token = localStorage.getItem('token');
         const url = isRoom 
-          ? `${API_URL}/api/rooms/${friendId}`
-          : `${API_URL}/api/messages/${friendId}`;
+          ? `http://localhost:3000/api/rooms/${friendId}`
+          : `http://localhost:3000/api/messages/${friendId}`;
 
         const res = await fetch(url, {
             method: 'DELETE',
@@ -232,7 +226,7 @@ export function ChatArea({ currentUserId, selectedFriend, onMessageSent, isConne
   const confirmLeave = async () => {
        try {
            const token = localStorage.getItem('token');
-           const res = await fetch(`${API_URL}/api/rooms/${friendId}/leave`, {
+           const res = await fetch(`http://localhost:3000/api/rooms/${friendId}/leave`, {
                method: 'POST',
                headers: { Authorization: `Bearer ${token}` }
            });
@@ -303,24 +297,7 @@ export function ChatArea({ currentUserId, selectedFriend, onMessageSent, isConne
                       title={isConnected ? "Connected" : "Disconnected"} 
                     />
                 </div>
-              ) : (
-                messages.map((message) => (
-                  <MessageItem
-                    key={message.id}
-                    message={{
-                      ...message,
-                      // ensure timestamp is a Date for rendering
-                      timestamp:
-                        typeof message.timestamp === "string"
-                          ? new Date(message.timestamp)
-                          : message.timestamp,
-                    }}
-                    isOwn={message.senderId === currentUserId}
-                  />
-                ))
-              )}
             </div>
-          </ScrollArea>
         </div>
 
         <div className="flex items-center gap-1">
