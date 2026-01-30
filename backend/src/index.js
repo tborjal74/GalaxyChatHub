@@ -20,7 +20,7 @@ const app = express();
 const httpServer = createServer(app);
 const io = new Server(httpServer, {
   cors: {
-    origin: "http://localhost:5173", // Vite default port
+    origin: process.env.CLIENT_URL || "http://localhost:5173",
     methods: ["GET", "POST"]
   }
 });
@@ -31,6 +31,12 @@ const PORT = process.env.PORT || 3000;
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// Attach IO to request
+app.use((req, res, next) => {
+  req.io = io;
+  next();
+});
 
 // Serve uploaded avatars
 app.use(
@@ -45,20 +51,23 @@ io.on('connection', (socket) => {
   // 1. Join a specific conversation room
   socket.on('join_dm', ({ currentUserId, targetUserId }) => {
     // Create a unique room ID for this pair
-    const roomId = [currentUserId, targetUserId].sort().join('_');
+    const roomId = [parseInt(currentUserId), parseInt(targetUserId)].sort().join('_');
     socket.join(roomId);
     console.log(`User ${currentUserId} joined room ${roomId}`);
   });
 
   // 2. Handle sending messages
-  socket.on('send_dm', async ({ senderId, receiverId, content }) => {
+  socket.on('send_dm', async ({ senderId, receiverId, content }, callback) => {
     try {
+      const sId = parseInt(senderId);
+      const rId = parseInt(receiverId);
+
       // A. Save to Database (Prisma)
       const newMessage = await prisma.directMessage.create({
         data: {
           content,
-          senderId,
-          receiverId
+          senderId: sId,
+          receiverId: rId
         },
         include: {
           sender: true // Optional: Sender Details
@@ -66,14 +75,47 @@ io.on('connection', (socket) => {
       });
 
       // B. Broadcast to the specific room
-      const roomId = [senderId, receiverId].sort().join('_');
+      const roomId = [sId, rId].sort().join('_');
       io.to(roomId).emit('receive_dm', newMessage);
+      
+      if (callback) callback({ status: 'ok', data: newMessage });
 
     } catch (error) {
       console.error('Error sending message:', error);
       // Optional: Emit error back to sender
       socket.emit('message_error', { error: 'Failed to send' });
+      if (callback) callback({ status: 'error' });
     }
+  });
+
+  // 3. Join Group Room
+  socket.on('join_room', ({ roomId }) => {
+    const roomName = `group_${parseInt(roomId)}`;
+    socket.join(roomName);
+    console.log(`Socket ${socket.id} joined ${roomName}`);
+  });
+
+  // 4. Send Group Message
+  socket.on('send_room_message', async ({ roomId, content, userId }, callback) => {
+     try {
+       const message = await prisma.message.create({
+         data: {
+           content,
+           roomId: parseInt(roomId),
+           userId: parseInt(userId)
+         },
+         include: {
+           user: {
+             select: { id: true, username: true, avatarUrl: true }
+           }
+         }
+       });
+       io.to(`group_${roomId}`).emit('receive_room_message', message);
+       if (callback) callback({ status: 'ok', data: message });
+     } catch(e) {
+       console.error("Error sending room message:", e);
+       if (callback) callback({ status: 'error' });
+     }
   });
 
   socket.on('disconnect', () => {

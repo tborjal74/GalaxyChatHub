@@ -65,7 +65,8 @@ export const uploadUserAvatar = async (req, res) => {
       return errorResponse(res, "No file uploaded", 400);
     }
 
-    const avatarUrl = `/uploads/avatars/${req.file.filename}`;
+    // Use the Cloudinary URL directly
+    const avatarUrl = req.file.path; 
 
     const updatedUser = await prisma.user.update({
       where: { id: userId },
@@ -126,7 +127,8 @@ export const updateMe = async (req, res) => {
 
     // Avatar upload
     if (req.file) {
-      data.avatarUrl = `/uploads/avatars/${req.file.filename}`;
+      // Use the Cloudinary URL directly
+      data.avatarUrl = req.file.path;
     }
 
     // Avatar removal

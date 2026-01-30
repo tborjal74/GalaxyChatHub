@@ -7,6 +7,7 @@ import { DangerZone } from "./DangerZone";
 import { ConfirmDangerModal } from "./ConfirmDangerModal";
 import { ProfileInfo } from "./ProfileInfo";
 import { ProfileTabs } from "./ProfileTabs";
+import { API_URL } from "../../config";
 
 interface UserProfile {
   username: string;
@@ -47,8 +48,12 @@ export function ProfileView({
   };
 
   function getAvatarUrl(path: string) {
+    if (!path) return "";
+    if (path.startsWith("http") || path.startsWith("https")) {
+      return path;
+    }
     // Note: Ensure your backend is actually running on 3000 or update this string
-    return `http://localhost:3000${path}?t=${Date.now()}`;
+    return `${API_URL}${path}?t=${Date.now()}`;
   }
 
   type UploadAvatarResponse = {
@@ -61,7 +66,7 @@ export function ProfileView({
 
     const token = localStorage.getItem("token");
 
-    const response = await fetch("http://localhost:3000/api/users/avatar", {
+    const response = await fetch(`${API_URL}/api/users/avatar`, {
       method: "POST",
       headers: {
         Authorization: `Bearer ${token}`,
@@ -86,8 +91,8 @@ export function ProfileView({
     
     try {
       setIsDeleting(true);
-      const API_URL = "http://localhost:3000/api/users";
-      const response = await fetch(`${API_URL}/`, {
+      const USERS_API = `${API_URL}/api/users`;
+      const response = await fetch(`${USERS_API}/`, {
         method: "DELETE",
         headers: {
           Authorization: `Bearer ${token}`,
