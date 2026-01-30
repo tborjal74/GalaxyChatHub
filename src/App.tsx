@@ -1,6 +1,7 @@
-import React, { useEffect, useState } from "react";
-import { AuthPage } from "./components/AuthPage";
+import { useEffect, useState } from "react";
+import { AuthPage } from "./components/authPage";
 import { Sidebar } from "./components/sideBar";
+import { ProfileView } from "./components/profile/ProfileView";
 import { FriendsView } from "./components/FriendsView";
 import { ChatArea } from "./components/ChatArea";
 import { socket } from "./socket";
@@ -15,9 +16,10 @@ interface User {
   username: string;
   email: string;
   bio?: string;
-  joinedDate?: Date;
+  joinedDate: Date;
   avatarUrl?: string;
 }
+
 
 interface Friend {
   id: string;
@@ -267,7 +269,7 @@ function App() {
     try {
       // fetch messages for the room
       const res = await fetch(
-        `http://localhost:3000/api/messages/room/${encodeURIComponent(roomId)}`,
+        `http://localhost:3000/api/room/${encodeURIComponent(roomId)}`,
         {
           headers: { ...authHeaders(), "Content-Type": "application/json" },
         }
@@ -510,6 +512,13 @@ function App() {
           }
           initialMessages={selectedRoom ? roomMessages[selectedRoom] ?? [] : selectedFriend ? dmMessages[selectedFriend.id] ?? [] : []}
           participants={[]} // populate if you have participant lists for rooms
+        />
+      )}
+       {activeView === "profile" && (
+        <ProfileView
+          user={currentUser}
+          onUpdateProfile={handleUpdateProfile}
+          onLogout={handleLogout}
         />
       )}
     </div>

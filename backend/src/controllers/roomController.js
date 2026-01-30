@@ -1,5 +1,4 @@
-import { PrismaClient } from '@prisma/client';
-const prisma = new PrismaClient();
+import { prisma } from '../database/database.js';
 
 export const createRoom = async (req, res) => {
   const { name, isPrivate } = req.body;

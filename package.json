@@ -16,7 +16,7 @@
   },
   "dependencies": {
     "@azure/cosmos": "^4.9.0",
-    "@prisma/adapter-pg": "^7.2.0",
+    "@prisma/adapter-pg": "^7.3.0",
     "@prisma/client": "^7.2.0",
     "@radix-ui/react-avatar": "^1.1.11",
     "@radix-ui/react-dialog": "^1.1.15",
@@ -31,7 +31,7 @@
     "jsonwebtoken": "^9.0.3",
     "lucide-react": "^0.562.0",
     "multer": "^2.0.2",
-    "pg": "^8.17.1",
+    "pg": "^8.17.2",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
     "react-easy-crop": "^5.5.6",
