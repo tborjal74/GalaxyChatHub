@@ -142,7 +142,7 @@ export function FriendsView({ onChatSelect }: FriendsViewProps) {
             onChange={e => setNewFriendName(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && addFriend()}
         />
-        <button onClick={addFriend} className="bg-purple-600 px-4 py-2 rounded hover:bg-purple-700">Add Friend</button>
+        <button onClick={addFriend} className="bg-purple-600 px-4 py-2 rounded hover:bg-purple-700 cursor-pointer">Add Friend</button>
       </div>
 
       <div className="mb-6">
@@ -151,7 +151,7 @@ export function FriendsView({ onChatSelect }: FriendsViewProps) {
         {requests.map(req => (
             <div key={req.id} className="flex items-center justify-between p-3 bg-gray-900 rounded mb-2">
                 <span>{req.sender.username} wants to be friends</span>
-                <button onClick={() => acceptRequest(req.id)} className="bg-green-600 px-3 py-1 rounded text-sm">Accept</button>
+                <button onClick={() => acceptRequest(req.id)} className="bg-green-600 px-3 py-1 rounded text-sm cursor-pointer">Accept</button>
             </div>
         ))}
       </div>
@@ -171,7 +171,7 @@ export function FriendsView({ onChatSelect }: FriendsViewProps) {
                     </div>
                 </div>
                 <button 
-                  className="text-gray-400 hover:text-white bg-gray-800 px-3 py-1 rounded border border-gray-700 hover:bg-purple-600 hover:border-purple-600"
+                  className="text-gray-400 hover:text-white bg-gray-800 px-3 py-1 rounded border border-gray-700 hover:bg-purple-600 hover:border-purple-600 cursor-pointer"
                   onClick={() => onChatSelect?.(friend)}
                 >
                   Message
