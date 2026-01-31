@@ -19,11 +19,18 @@ const __dirname = path.dirname(__filename);
 const app = express();
 const httpServer = createServer(app);
 
+// Helper to normalize origins (remove trailing slashes)
+const normalizeOrigin = (url) => url ? url.replace(/\/$/, "") : "";
+
 const allowedOrigins = [
   "http://localhost:5173",
   "http://localhost:4173",
-  process.env.CLIENT_URL, // Add your Vercel URL here via environment variable
-].filter(Boolean); // Remove empty values
+  "https://galaxychathub-front.vercel.app", // Explicitly added from error message
+  "https://galaxy-chat-hub.vercel.app",     // Potential other Vercel URL
+  normalizeOrigin(process.env.CLIENT_URL)     // Environment variable
+].filter(Boolean);
+
+console.log("Allowed Origins:", allowedOrigins);
 
 const io = new Server(httpServer, {
   cors: {
@@ -38,7 +45,8 @@ const PORT = process.env.PORT || 3000;
 // Middleware
 app.use(cors({
   origin: allowedOrigins,
-  credentials: true
+  credentials: true,
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"]
 }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
