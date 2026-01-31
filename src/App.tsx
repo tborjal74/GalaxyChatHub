@@ -80,6 +80,11 @@ function App() {
     function onConnect() {
       setIsConnected(true);
       console.log("Socket connected!");
+      
+      // Register user for status tracking
+      if (currentUser?.id) {
+         socket.emit('register_user', currentUser.id);
+      }
     }
 
     function onDisconnect() {
@@ -112,7 +117,11 @@ function App() {
 
     // Connect only if we have a user (optional strategy)
     if (currentUser) {
-      socket.connect();
+      if (!socket.connected) socket.connect();
+      // If already connected, register immediately (handles page refreshes where socket might reconnect fast)
+      if (socket.connected) {
+         socket.emit('register_user', currentUser.id);
+      }
     }
 
     return () => {

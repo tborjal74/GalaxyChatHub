@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { ConfirmModal } from './ui/confirm-modal';
 import { API_URL } from '../config';
+import { socket } from '../socket';
 
 interface Friend {
   id: string;
@@ -46,6 +47,22 @@ export function FriendsView({ onChatSelect }: FriendsViewProps) {
   useEffect(() => {
     fetchFriends();
     fetchRequests();
+    
+    // Status Listener
+    const onStatusChange = ({ userId, status }: { userId: number, status: string }) => {
+        setFriends(prev => prev.map(f => {
+            if (parseInt(f.id) === userId) {
+                 return { ...f, status: status === 'online' ? 'online' : 'offline' };
+            }
+            return f;
+        }));
+    };
+    
+    socket.on('user_status_change', onStatusChange);
+    
+    return () => {
+        socket.off('user_status_change', onStatusChange);
+    };
   }, []);
 
   const addFriend = async () => {
