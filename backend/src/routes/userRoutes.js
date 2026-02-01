@@ -1,6 +1,6 @@
 // routes/userRoutes.js
 import express from 'express';
-import { getUsers, getUser, createUser, deleteUserById, uploadUserAvatar, getMe, updateMe } from '../controllers/userController.js';
+import { getUsers, getUser, createUser, deleteUserById, uploadUserAvatar, getMe, updateMe, changePassword } from '../controllers/userController.js';
 import { isAuthenticated } from '../middlewares/authMiddleware.js';
 import { uploadAvatar } from "../middlewares/uploadAvatarMiddleware.js";
 
@@ -21,5 +21,6 @@ router.post(
   uploadAvatar.single("avatar"),
   uploadUserAvatar
 );
+router.post('/change-password', isAuthenticated, changePassword)
 
 export default router;

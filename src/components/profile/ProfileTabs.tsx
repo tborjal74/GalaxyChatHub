@@ -2,6 +2,8 @@ import { Card } from "../ui/card";
 import { Button } from "../ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
 import { Shield } from "lucide-react";
+import { useState } from "react";
+import { ChangePasswordModal } from "./ChangePasswordModal";
 
 type ProfileTabsProps = {
   isEditing: boolean;
@@ -21,6 +23,7 @@ export function ProfileTabs({
   editedUser,
   setEditedUser,
 }: ProfileTabsProps) {
+  const [showModal, setShowModal] = useState(false);
   return (
     <Tabs defaultValue="about" className="w-full">
       <TabsList className="bg-secondary">
@@ -87,14 +90,18 @@ export function ProfileTabs({
                   ••••••••••••
                 </div>
               </div>
-
               <Button
                 variant="outline"
                 size="sm"
-                className="border-border text-white cursor-pointer"
+                onClick={() => setShowModal(true)}
+                className="cursor-pointer"
               >
                 Change Password
               </Button>
+
+              {showModal && (
+                <ChangePasswordModal onClose={() => setShowModal(false)} />
+              )}
             </div>
 
             <div className="flex justify-between items-center py-3">

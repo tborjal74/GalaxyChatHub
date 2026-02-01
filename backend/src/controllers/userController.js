@@ -2,6 +2,7 @@
 import * as userService from '../services/userService.js';
 import { prisma } from '../database/database.js';
 import { successResponse, errorResponse } from '../utils/apiResponse.js';
+import bcrypt from 'bcryptjs';
 
 export const getUsers = async (req, res) => {
   try {
@@ -157,6 +158,37 @@ export const updateMe = async (req, res) => {
     return errorResponse(res, "Failed to update profile", 500, error);
   }
 };
+
+export async function changePassword(req, res) {
+  const userId = req.user.userId;
+  const { currentPassword, newPassword } = req.body;
+
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+  });
+
+  const match = await bcrypt.compare(
+    currentPassword,
+    user.password
+  );
+
+  if (!match) {
+    return res.status(400).json({
+      message: "Current password is incorrect",
+    });
+  }
+
+  const hashed = await bcrypt.hash(newPassword, 10);
+
+  await prisma.user.update({
+    where: { id: userId },
+    data: {
+      password: hashed,
+    },
+  });
+
+  return res.json({ success: true });
+}
 
 
 
