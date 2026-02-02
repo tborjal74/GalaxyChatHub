@@ -93,4 +93,4 @@ npm run lint
 - **Marcos Antunes Jr.** 
 - **Terence Dreico Borjal** 
 - **Loris Jared Ndonga** 
-- **Collin Earl Highwood**
+- **Tafadzwa Chingore**
