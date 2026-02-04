@@ -163,6 +163,17 @@ export async function changePassword(req, res) {
   const userId = req.user.userId;
   const { currentPassword, newPassword } = req.body;
 
+    // ---- PASSWORD VALIDATION ----
+  const passwordRegex = /^(?=.*[0-9])(?=.*[!@#$%^&*(),.?":{}|<>]).{8,12}$/;
+
+  if (!passwordRegex.test(newPassword)) {
+    return res.status(400).json({
+      message:
+        "Password must be 8–12 characters, contain at least 1 number and 1 special character",
+    });
+  }
+  // -----------------------------
+
   const user = await prisma.user.findUnique({
     where: { id: userId },
   });

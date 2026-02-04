@@ -27,6 +27,13 @@ export function ChangePasswordModal({ onClose }: Props) {
       return;
     }
 
+    if (!isPasswordValid(newPassword)) {
+      setError(
+        "Password must be 8–12 characters, contain at least 1 number and 1 special character",
+      );
+      return;
+    }
+
     try {
       const token = localStorage.getItem("token");
       const res = await fetch(`${API_URL}/api/users/change-password`, {
@@ -56,12 +63,12 @@ export function ChangePasswordModal({ onClose }: Props) {
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4"
+      className="fixed inset-0 flex items-center justify-center bg-black/70 p-4 z-[9999]"
       onClick={onClose}
     >
       {/* MODAL CARD */}
       <Card
-        className="w-full max-w-[420px] bg-card p-4 sm:p-6"
+        className="w-full max-w-[420px] bg-card p-4 sm:p-6 max-h-[90vh] overflow-y-auto relative z-[10000]"
         onClick={(e) => e.stopPropagation()}
       >
         <h3 className="text-white mb-4">Change Password</h3>
@@ -87,6 +94,8 @@ export function ChangePasswordModal({ onClose }: Props) {
               visible={showNew}
               toggle={() => setShowNew(!showNew)}
             />
+
+            <PasswordRules password={newPassword} />
 
             <PasswordInput
               placeholder="Confirm new password"
@@ -148,4 +157,31 @@ function PasswordInput({
       </button>
     </div>
   );
+}
+
+function PasswordRules({ password }: { password: string }) {
+  const hasLength = password.length >= 8 && password.length <= 12;
+  const hasNumber = /[0-9]/.test(password);
+  const hasSpecial = /[!@#$%^&*(),.?":{}|<>]/.test(password);
+
+  function Rule({ ok, text }: { ok: boolean; text: string }) {
+    return (
+      <div className={ok ? "text-green-400 text-sm" : "text-gray-400 text-sm"}>
+        • {text}
+      </div>
+    );
+  }
+
+  return (
+    <div className="mt-1 mb-2">
+      <Rule ok={hasLength} text="8–12 characters" />
+      <Rule ok={hasNumber} text="At least 1 number" />
+      <Rule ok={hasSpecial} text="At least 1 special character" />
+    </div>
+  );
+}
+
+function isPasswordValid(password: string) {
+  const regex = /^(?=.*[0-9])(?=.*[!@#$%^&*(),.?":{}|<>]).{8,12}$/;
+  return regex.test(password);
 }

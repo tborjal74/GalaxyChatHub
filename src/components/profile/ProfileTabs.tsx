@@ -99,9 +99,7 @@ export function ProfileTabs({
                 Change Password
               </Button>
 
-              {showModal && (
-                <ChangePasswordModal onClose={() => setShowModal(false)} />
-              )}
+           
             </div>
 
             <div className="flex justify-between items-center py-3">
@@ -142,7 +140,11 @@ export function ProfileTabs({
           </div>
         </Card>
       </TabsContent>
+         {showModal && (
+                <ChangePasswordModal onClose={() => setShowModal(false)} />
+              )}
     </Tabs>
+    
   );
 }
 

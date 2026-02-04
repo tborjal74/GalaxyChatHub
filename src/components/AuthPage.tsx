@@ -71,6 +71,12 @@ export function AuthPage({ onLogin }: AuthPageProps) {
           throw new Error("Passwords do not match!");
         }
 
+        if (!isPasswordValid(password)) {
+          throw new Error(
+            "Password must be 8–12 characters, contain at least 1 number and 1 special character",
+          );
+        }
+
         const response = await fetch(`${AUTH_URL}/register`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -107,7 +113,9 @@ export function AuthPage({ onLogin }: AuthPageProps) {
 
       <Card className="relative z-10 w-full max-w-[min(24rem,calc(100vw-1.5rem))] bg-card/80 p-4 shadow-xl backdrop-blur-xl border-border sm:p-6 md:max-w-md md:p-8">
         <div className="mb-6 flex flex-col items-center sm:mb-8">
-          <h1 className="text-center text-lg text-white sm:text-xl">Galaxy Chat Hub</h1>
+          <h1 className="text-center text-lg text-white sm:text-xl">
+            Galaxy Chat Hub
+          </h1>
           <p className="mt-2 text-center text-sm text-muted-foreground">
             {isLogin ? "Welcome back!" : "Create your account"}
           </p>
@@ -183,6 +191,8 @@ export function AuthPage({ onLogin }: AuthPageProps) {
                 />
               </div>
 
+              <PasswordRules password={password} />
+
               <div>
                 <Input
                   type="password"
@@ -223,7 +233,11 @@ export function AuthPage({ onLogin }: AuthPageProps) {
           <button
             type="submit"
             className="w-full cursor-pointer rounded bg-primary p-3 text-white hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50 sm:p-2"
-            disabled={loading}
+            disabled={
+              loading ||
+              (!isLogin &&
+                (!isPasswordValid(password) || password !== confirmPassword))
+            }
           >
             {loading ? "Processing..." : isLogin ? "Log In" : "Sign Up"}
           </button>
@@ -246,4 +260,31 @@ export function AuthPage({ onLogin }: AuthPageProps) {
       </Card>
     </div>
   );
+}
+
+function PasswordRules({ password }: { password: string }) {
+  const hasLength = password.length >= 8 && password.length <= 12;
+  const hasNumber = /[0-9]/.test(password);
+  const hasSpecial = /[!@#$%^&*(),.?":{}|<>]/.test(password);
+
+  function Rule({ ok, text }: { ok: boolean; text: string }) {
+    return (
+      <div className={ok ? "text-green-400 text-sm" : "text-gray-400 text-sm"}>
+        • {text}
+      </div>
+    );
+  }
+
+  return (
+    <div className="mt-1 mb-2">
+      <Rule ok={hasLength} text="8–12 characters" />
+      <Rule ok={hasNumber} text="At least 1 number" />
+      <Rule ok={hasSpecial} text="At least 1 special character" />
+    </div>
+  );
+}
+
+function isPasswordValid(password: string) {
+  const regex = /^(?=.*[0-9])(?=.*[!@#$%^&*(),.?":{}|<>]).{8,12}$/;
+  return regex.test(password);
 }
