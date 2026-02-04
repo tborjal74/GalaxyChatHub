@@ -29,6 +29,7 @@ function App() {
   const selectedFriendRef = useRef(selectedFriend);
   const [rooms, setRooms] = useState<any[]>([]);
   const [modal, setModal] = useState({ isOpen: false, title: "", message: "", type: "info" as "danger"|"info"|"alert", onConfirm: undefined as undefined|(() => void) });
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   useEffect(() => {
       selectedFriendRef.current = selectedFriend;
@@ -157,12 +158,27 @@ function App() {
             combined.push(...dataRooms.data.map((r: any) => ({ ...r, id: `room_${r.id}`, originalId: r.id, type: 'room' })));
        }
        setRooms(combined);
+       restoreSelectedChat(combined);
      } catch(e) { console.error(e); }
   };
 
   useEffect(() => {
      if(currentUser) fetchRooms();
-  }, [currentUser, activeView]); 
+  }, [currentUser, activeView]);
+
+  // Restore selected chat from localStorage after rooms are loaded (so messages load from DB after refresh)
+  const restoreSelectedChat = (roomsList: any[]) => {
+    try {
+      const stored = localStorage.getItem('selectedChat');
+      if (!stored || roomsList.length === 0) return;
+      const { originalId, type } = JSON.parse(stored);
+      const match = roomsList.find((r: any) => Number(r.originalId) === Number(originalId) && r.type === type);
+      if (match) {
+        setSelectedFriend(match);
+        setActiveView('rooms');
+      }
+    } catch (_) { /* ignore */ }
+  }; 
 
   const handleLogin = () => {
     loadUser();
@@ -170,8 +186,10 @@ function App() {
 
   const handleLogout = () => {
     setCurrentUser(null);
+    setSelectedFriend(null);
     localStorage.removeItem('token');
     localStorage.removeItem('user');
+    localStorage.removeItem('selectedChat');
     socket.disconnect();
   };
 
@@ -222,9 +240,20 @@ function App() {
   }
 
   return (
-    <div className="flex h-screen bg-background overflow-hidden">
+    <div className="flex h-screen min-h-0 w-full max-w-[100vw] overflow-hidden bg-background">
+
+      {/* Mobile overlay when sidebar is open */}
+      <div
+        aria-hidden="true"
+        className="fixed inset-0 z-30 bg-black/50 md:hidden transition-opacity duration-200"
+        style={{ opacity: sidebarOpen ? 1 : 0, pointerEvents: sidebarOpen ? "auto" : "none" }}
+        onClick={() => setSidebarOpen(false)}
+      />
 
       <Sidebar
+        open={sidebarOpen}
+        onClose={() => setSidebarOpen(false)}
+        onNavigate={() => setSidebarOpen(false)}
         currentUser={currentUser}
         activeView={activeView}
         onViewChange={(view) => {
@@ -236,19 +265,38 @@ function App() {
         onRoomSelect={(roomId) => {
             const room = rooms.find(r => r.id === roomId);
             if(room) {
-                setSelectedFriend(room); 
-                setActiveView('rooms'); 
+                setSelectedFriend(room);
+                localStorage.setItem('selectedChat', JSON.stringify({ originalId: room.originalId ?? room.id, type: room.type || 'dm' }));
+                setActiveView('rooms');
             }
         }}
         selectedRoom={selectedFriend?.id}
         onRefreshRooms={fetchRooms}
       />
 
+      {/* Mobile top bar: menu button when sidebar is closed */}
+      <div className="fixed top-0 left-0 right-0 z-20 flex h-14 items-center gap-3 border-b border-sidebar-border bg-sidebar px-3 md:hidden">
+        <button
+          type="button"
+          onClick={() => setSidebarOpen(true)}
+          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md text-sidebar-foreground hover:bg-sidebar-accent"
+          aria-label="Open menu"
+        >
+          <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+          </svg>
+        </button>
+        <span className="truncate text-sm font-medium text-white">Galaxy Chat Hub</span>
+      </div>
+
+      <main className="flex min-w-0 flex-1 flex-col pt-14 md:pt-0">
       {activeView === "friends" && (
         <FriendsView 
              onChatSelect={(friend) => {
-                 setSelectedFriend({ ...friend, id: `dm_${friend.id}`, originalId: friend.id, type: 'dm' });
-                 setActiveView('rooms'); 
+                 const chat = { ...friend, id: `dm_${friend.id}`, originalId: friend.id, type: 'dm' as const };
+                 setSelectedFriend(chat);
+                 localStorage.setItem('selectedChat', JSON.stringify({ originalId: friend.id, type: 'dm' }));
+                 setActiveView('rooms');
              }}
         />
       )}
@@ -259,7 +307,7 @@ function App() {
            selectedFriend={selectedFriend} 
            onMessageSent={fetchRooms}
            isConnected={isConnected}
-           onBack={() => setSelectedFriend(undefined)}
+           onBack={() => { setSelectedFriend(undefined); localStorage.removeItem('selectedChat'); }}
         />
       )}
       
@@ -279,6 +327,7 @@ function App() {
           onConfirm={modal.onConfirm}
           onClose={() => setModal(prev => ({ ...prev, isOpen: false }))}
       />
+      </main>
     </div>
   );
 }

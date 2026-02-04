@@ -88,8 +88,8 @@ export function CreateRoomModal({ isOpen, onClose, onRoomCreated }: CreateRoomMo
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/50 z-[100] flex items-center justify-center">
-      <div className="bg-[#1a1b26] p-6 rounded-lg w-96 border border-gray-700 shadow-xl">
+    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 p-4">
+      <div className="w-full max-w-[24rem] rounded-lg border border-gray-700 bg-[#1a1b26] p-4 shadow-xl sm:p-6">
         <h2 className="text-xl font-bold text-white mb-4">Create Group Chat</h2>
         
         <div className="space-y-4">

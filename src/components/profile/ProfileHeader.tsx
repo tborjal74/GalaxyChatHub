@@ -15,20 +15,20 @@ export function ProfileHeader({
   onSave,
 }: ProfileHeaderProps) {
   return (
-    <div className="p-6 border-b border-border">
-      <div className="flex items-center justify-between">
-        <h2 className="text-white">My Profile</h2>
+    <div className="shrink-0 border-b border-border p-4 sm:p-6">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <h2 className="text-lg font-medium text-white sm:text-base">My Profile</h2>
 
         {!isEditing ? (
           <Button
             onClick={onEdit}
-            className="bg-primary hover:bg-primary/90 text-white cursor-pointer"
+            className="w-full cursor-pointer bg-primary text-white hover:bg-primary/90 sm:w-auto"
           >
-            <Edit2 className="w-4 h-4 mr-2" />
+            <Edit2 className="h-4 w-4 mr-2" />
             Edit Profile
           </Button>
         ) : (
-          <div className="flex gap-2">
+          <div className="flex flex-col gap-2 sm:flex-row sm:gap-2">
             <Button
               onClick={onCancel}
               variant="outline"

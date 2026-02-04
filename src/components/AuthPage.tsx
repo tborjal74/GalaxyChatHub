@@ -99,16 +99,16 @@ export function AuthPage({ onLogin }: AuthPageProps) {
     }
   };
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#0a0a0f] via-[#1a0a2e] to-[#0a0a0f] p-4">
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-20 left-20 w-96 h-96 bg-purple-500/10 rounded-full blur-[100px]"></div>
-        <div className="absolute bottom-20 right-20 w-96 h-96 bg-violet-500/10 rounded-full blur-[100px]"></div>
+    <div className="flex min-h-dvh w-full items-center justify-center overflow-auto bg-gradient-to-br from-[#0a0a0f] via-[#1a0a2e] to-[#0a0a0f] p-3 sm:p-4">
+      <div className="absolute inset-0 pointer-events-none overflow-hidden">
+        <div className="absolute top-20 left-20 h-96 w-96 rounded-full bg-purple-500/10 blur-[100px]" />
+        <div className="absolute bottom-20 right-20 h-96 w-96 rounded-full bg-violet-500/10 blur-[100px]" />
       </div>
 
-      <Card className="w-full max-w-md p-8 bg-card/80 backdrop-blur-xl border-border relative z-10">
-        <div className="flex flex-col items-center mb-8">
-          <h1 className="text-white">Galaxy Chat Hub</h1>
-          <p className="text-muted-foreground text-sm mt-2">
+      <Card className="relative z-10 w-full max-w-[min(24rem,calc(100vw-1.5rem))] bg-card/80 p-4 shadow-xl backdrop-blur-xl border-border sm:p-6 md:max-w-md md:p-8">
+        <div className="mb-6 flex flex-col items-center sm:mb-8">
+          <h1 className="text-center text-lg text-white sm:text-xl">Galaxy Chat Hub</h1>
+          <p className="mt-2 text-center text-sm text-muted-foreground">
             {isLogin ? "Welcome back!" : "Create your account"}
           </p>
         </div>
@@ -126,7 +126,7 @@ export function AuthPage({ onLogin }: AuthPageProps) {
         )}
 
         {/* Conditional form */}
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-3 sm:space-y-4">
           {!isLogin ? (
             <>
               <div>
@@ -222,7 +222,7 @@ export function AuthPage({ onLogin }: AuthPageProps) {
 
           <button
             type="submit"
-            className="w-full bg-primary hover:bg-primary/90 text-white p-2 rounded disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+            className="w-full cursor-pointer rounded bg-primary p-3 text-white hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50 sm:p-2"
             disabled={loading}
           >
             {loading ? "Processing..." : isLogin ? "Log In" : "Sign Up"}
@@ -236,7 +236,7 @@ export function AuthPage({ onLogin }: AuthPageProps) {
               setIsLogin(!isLogin);
               resetForm();
             }}
-            className="text-sm text-primary hover:text-primary/80 cursor-pointer"
+            className="cursor-pointer text-sm text-primary hover:text-primary/80"
           >
             {isLogin
               ? "Don't have an account? Register"

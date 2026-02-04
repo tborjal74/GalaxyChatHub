@@ -58,19 +58,29 @@ export function ChatArea({ currentUserId, selectedFriend, onMessageSent, isConne
     };
     socket.on("connect", onConnect);
 
-    // Fetch History
-    const fetchUrl = isRoomType 
+    // Fetch message history from database (persists across refresh and restarts)
+    const fetchUrl = isRoomType
         ? `${API_URL}/api/rooms/${fId}/messages`
         : `${API_URL}/api/messages/${fId}`;
 
     fetch(fetchUrl, {
-       headers: { 'Authorization': `Bearer ${token}` }
+      headers: { Authorization: `Bearer ${token}` },
     })
-    .then(res => res.json())
-    .then(data => {
-        if (data.success) setMessages(data.data);
-    })
-    .catch(err => console.error("Failed to fetch history", err));
+      .then((res) => {
+        if (!res.ok) return { success: false };
+        return res.json();
+      })
+      .then((data) => {
+        if (data?.success && Array.isArray(data.data)) {
+          setMessages(data.data);
+        } else {
+          setMessages([]);
+        }
+      })
+      .catch((err) => {
+        console.error("Failed to fetch message history", err);
+        setMessages([]);
+      });
 
     return () => {
         socket.off("connect", onConnect);
@@ -270,8 +280,8 @@ export function ChatArea({ currentUserId, selectedFriend, onMessageSent, isConne
 
   if(!selectedFriend) {
       return (
-        <div className="flex-1 flex items-center justify-center text-muted-foreground bg-[#313338]">
-             <div className="text-center">
+        <div className="flex min-h-0 flex-1 flex-col items-center justify-center bg-[#313338] text-muted-foreground">
+             <div className="px-4 text-center text-sm sm:text-base">
                 <p>Select a conversation or group chat to view</p>
             </div>
         </div>
@@ -279,49 +289,49 @@ export function ChatArea({ currentUserId, selectedFriend, onMessageSent, isConne
   }
 
   return (
-    <div className="flex-1 flex flex-col h-full bg-[#313338] text-gray-100">
-       <div className="h-14 border-b border-[#26272D] flex items-center px-4 shadow-sm bg-[#313338] justify-between">
-        <div className="flex items-center gap-3">
-             <Button variant="ghost" size="icon" onClick={onBack} className="text-gray-400 hover:text-white mr-2" title="Back">
-                  <ArrowLeft className="w-5 h-5" />
+    <div className="flex min-h-0 flex-1 flex-col bg-[#313338] text-gray-100">
+       <div className="flex h-14 shrink-0 items-center justify-between gap-2 border-b border-[#26272D] bg-[#313338] px-2 shadow-sm sm:px-4">
+        <div className="flex min-w-0 flex-1 items-center gap-2 sm:gap-3">
+             <Button variant="ghost" size="icon" onClick={onBack} className="h-10 w-10 shrink-0 text-gray-400 hover:text-white sm:h-9 sm:w-9" title="Back">
+                  <ArrowLeft className="h-5 w-5" />
              </Button>
-             <Avatar className="w-8 h-8">
+             <Avatar className="h-8 w-8 shrink-0">
                 <AvatarFallback className="bg-purple-600 text-white text-xs">
                     {chatName?.[0]?.toUpperCase()}
                 </AvatarFallback>
              </Avatar>
-            <div>
-                <div className="font-bold text-sm text-gray-100 flex items-center gap-2">
-                    {chatName}
+            <div className="min-w-0">
+                <div className="flex items-center gap-2 font-bold text-gray-100 text-sm">
+                    <span className="truncate">{chatName}</span>
                     <span 
-                      className={`inline-block w-2 h-2 rounded-full ${isConnected ? 'bg-green-500' : 'bg-red-500'}`} 
+                      className={`inline-block h-2 w-2 shrink-0 rounded-full ${isConnected ? 'bg-green-500' : 'bg-red-500'}`} 
                       title={isConnected ? "Connected" : "Disconnected"} 
                     />
                 </div>
             </div>
         </div>
 
-        <div className="flex items-center gap-1">
+        <div className="flex shrink-0 items-center gap-0.5 sm:gap-1">
              {isRoom && (
                  <>
-                    <Button variant="ghost" size="icon" onClick={() => setShowMembersList(true)} className="text-gray-400 hover:text-white" title="Members">
-                        <Users className="w-5 h-5" />
+                    <Button variant="ghost" size="icon" onClick={() => setShowMembersList(true)} className="h-10 w-10 text-gray-400 hover:text-white sm:h-9 sm:w-9" title="Members">
+                        <Users className="h-5 w-5" />
                     </Button>
-                    <Button variant="ghost" size="icon" onClick={() => setShowAddMember(true)} className="text-gray-400 hover:text-white" title="Add Member">
-                        <UserPlus className="w-5 h-5" />
+                    <Button variant="ghost" size="icon" onClick={() => setShowAddMember(true)} className="h-10 w-10 text-gray-400 hover:text-white sm:h-9 sm:w-9" title="Add Member">
+                        <UserPlus className="h-5 w-5" />
                     </Button>
-                    <Button variant="ghost" size="icon" onClick={handleLeaveGroup} className="text-gray-400 hover:text-red-500" title="Leave Group">
-                        <LogOut className="w-5 h-5" />
+                    <Button variant="ghost" size="icon" onClick={handleLeaveGroup} className="h-10 w-10 text-gray-400 hover:text-red-500 sm:h-9 sm:w-9" title="Leave Group">
+                        <LogOut className="h-5 w-5" />
                     </Button>
                  </>
              )}
-             <Button variant="ghost" size="icon" className="text-gray-400 hover:text-red-500 hover:bg-transparent" onClick={handleDeleteConversation} title="Delete Conversation">
-                <Trash2 className="w-5 h-5" />
+             <Button variant="ghost" size="icon" className="h-10 w-10 text-gray-400 hover:bg-transparent hover:text-red-500 sm:h-9 sm:w-9" onClick={handleDeleteConversation} title="Delete Conversation">
+                <Trash2 className="h-5 w-5" />
              </Button>
         </div>
       </div>
 
-       <div className="flex-1 overflow-y-auto p-4 space-y-4" ref={scrollRef}>
+       <div className="min-h-0 flex-1 overflow-y-auto p-3 space-y-4 sm:p-4" ref={scrollRef}>
          {messages.map((msg, idx) => {
             const senderId = msg.senderId || msg.userId;
             const isMe = Number(senderId) === Number(currentUserId);
@@ -341,17 +351,17 @@ export function ChatArea({ currentUserId, selectedFriend, onMessageSent, isConne
             }
 
             return (
-           <div key={msg.id || idx} className={`flex gap-3 ${isMe ? "flex-row-reverse" : ""}`}>
-             <Avatar className="w-8 h-8 mt-1">
-                <AvatarFallback className={`${isMe ? 'bg-blue-600' : 'bg-purple-600'} text-white text-[10px]`}>
+           <div key={msg.id || idx} className={`flex gap-2 sm:gap-3 ${isMe ? "flex-row-reverse" : ""}`}>
+             <Avatar className="mt-1 h-7 w-7 shrink-0 sm:h-8 sm:w-8">
+                <AvatarFallback className={`text-[10px] text-white sm:text-xs ${isMe ? 'bg-blue-600' : 'bg-purple-600'}`}>
                     {senderName.substring(0,2).toUpperCase()}
                 </AvatarFallback>
              </Avatar>
              
-             <div className={`max-w-[70%] rounded-lg p-3 text-sm ${
+             <div className={`max-w-[85%] rounded-lg p-2.5 text-sm sm:max-w-[70%] sm:p-3 ${
                  isMe 
-                 ? "bg-blue-600 text-white rounded-br-none" 
-                 : "bg-[#2B2D31] text-gray-100 rounded-bl-none"
+                 ? "rounded-br-none bg-blue-600 text-white" 
+                 : "rounded-bl-none bg-[#2B2D31] text-gray-100"
              }`}>
                 {msg.content}
              </div>
@@ -359,17 +369,17 @@ export function ChatArea({ currentUserId, selectedFriend, onMessageSent, isConne
          )})}
        </div>
 
-       <div className="p-4 bg-[#313338]">
-         <div className="bg-[#383A40] rounded-lg flex items-center px-4 py-2 gap-2">
+       <div className="shrink-0 bg-[#313338] p-3 sm:p-4">
+         <div className="flex items-center gap-2 rounded-lg bg-[#383A40] px-3 py-2 sm:px-4">
              <input 
-               className="bg-transparent flex-1 outline-none text-gray-200 placeholder-gray-400 text-sm"
+               className="min-w-0 flex-1 bg-transparent text-sm text-gray-200 outline-none placeholder:text-gray-400"
                placeholder={`Message ${chatName}`}
                value={inputText} 
                onChange={(e) => setInputText(e.target.value)}
                onKeyDown={(e) => e.key === 'Enter' && handleSend()}
              />
-             <Button variant="ghost" size="icon" onClick={handleSend} className="text-gray-400 hover:text-white hover:bg-transparent">
-                 <SendHorizontal className="w-5 h-5" />
+             <Button variant="ghost" size="icon" onClick={handleSend} className="h-10 w-10 shrink-0 text-gray-400 hover:bg-transparent hover:text-white sm:h-9 sm:w-9">
+                 <SendHorizontal className="h-5 w-5" />
              </Button>
          </div>
        </div>

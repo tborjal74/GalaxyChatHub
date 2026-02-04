@@ -131,47 +131,47 @@ export function FriendsView({ onChatSelect }: FriendsViewProps) {
   };
 
   return (
-    <div className="flex-1 p-6 text-white overflow-y-auto">
-      <h2 className="text-2xl font-bold mb-4">Friends</h2>
+    <div className="flex min-h-0 flex-1 flex-col overflow-y-auto p-4 text-white sm:p-6">
+      <h2 className="mb-4 text-xl font-bold sm:text-2xl">Friends</h2>
       
-      <div className="flex gap-2 mb-6">
+      <div className="mb-6 flex flex-col gap-2 sm:flex-row sm:gap-2">
         <input 
-            className="p-2 rounded bg-gray-800 border border-gray-700 outline-none focus:border-purple-500 transition-colors placeholder:text-gray-500 text-sm w-64"
+            className="min-w-0 flex-1 rounded border border-gray-700 bg-gray-800 p-2.5 text-sm outline-none transition-colors placeholder:text-gray-500 focus:border-purple-500 sm:w-64"
             placeholder="Add friend by username" 
             value={newFriendName}
             onChange={e => setNewFriendName(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && addFriend()}
         />
-        <button onClick={addFriend} className="bg-purple-600 px-4 py-2 rounded hover:bg-purple-700 cursor-pointer">Add Friend</button>
+        <button onClick={addFriend} className="h-11 shrink-0 rounded bg-purple-600 px-4 py-2 text-sm font-medium hover:bg-purple-700 cursor-pointer sm:h-10">Add Friend</button>
       </div>
 
       <div className="mb-6">
-        <h3 className="text-lg font-semibold mb-2 text-gray-400">Friend Requests</h3>
-        {requests.length === 0 && <p className="text-gray-500">No pending requests</p>}
+        <h3 className="mb-2 text-base font-semibold text-gray-400 sm:text-lg">Friend Requests</h3>
+        {requests.length === 0 && <p className="text-sm text-gray-500">No pending requests</p>}
         {requests.map(req => (
-            <div key={req.id} className="flex items-center justify-between p-3 bg-gray-900 rounded mb-2">
-                <span>{req.sender.username} wants to be friends</span>
-                <button onClick={() => acceptRequest(req.id)} className="bg-green-600 px-3 py-1 rounded text-sm cursor-pointer">Accept</button>
+            <div key={req.id} className="mb-2 flex flex-col gap-2 rounded bg-gray-900 p-3 sm:flex-row sm:items-center sm:justify-between">
+                <span className="min-w-0 truncate text-sm sm:text-base">{req.sender.username} wants to be friends</span>
+                <button onClick={() => acceptRequest(req.id)} className="h-10 shrink-0 self-end rounded bg-green-600 px-3 py-1.5 text-sm cursor-pointer hover:bg-green-700 sm:self-center">Accept</button>
             </div>
         ))}
       </div>
 
       <div className="grid gap-2">
-        <h3 className="text-lg font-semibold mb-2 text-gray-400">My Friends</h3>
-        {friends.length === 0 && <p className="text-gray-500">No friends yet. Add someone!</p>}
+        <h3 className="mb-2 text-base font-semibold text-gray-400 sm:text-lg">My Friends</h3>
+        {friends.length === 0 && <p className="text-sm text-gray-500">No friends yet. Add someone!</p>}
         {friends.map(friend => (
-            <div key={friend.id} className="flex items-center justify-between p-3 bg-gray-900 rounded hover:bg-gray-800">
-                <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-purple-500 rounded-full flex items-center justify-center text-lg font-bold">
+            <div key={friend.id} className="flex flex-col gap-2 rounded bg-gray-900 p-3 hover:bg-gray-800 sm:flex-row sm:items-center sm:justify-between">
+                <div className="flex min-w-0 items-center gap-3">
+                    <div className="h-10 w-10 shrink-0 rounded-full bg-purple-500 flex items-center justify-center text-lg font-bold">
                         {friend.username?.[0]?.toUpperCase()}
                     </div>
-                    <div>
-                        <div className="font-medium">{friend.username}</div>
+                    <div className="min-w-0">
+                        <div className="truncate font-medium">{friend.username}</div>
                         <div className="text-xs text-gray-400">{friend.status}</div>
                     </div>
                 </div>
                 <button 
-                  className="text-gray-400 hover:text-white bg-gray-800 px-3 py-1 rounded border border-gray-700 hover:bg-purple-600 hover:border-purple-600 cursor-pointer"
+                  className="h-10 shrink-0 self-end rounded border border-gray-700 bg-gray-800 px-3 py-1.5 text-sm text-gray-400 hover:border-purple-600 hover:bg-purple-600 hover:text-white cursor-pointer sm:self-center"
                   onClick={() => onChatSelect?.(friend)}
                 >
                   Message

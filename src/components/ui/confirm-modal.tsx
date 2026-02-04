@@ -26,8 +26,8 @@ export function ConfirmModal({
   const isAlert = type === 'alert';
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
-      <div className={`bg-[#313338] p-6 rounded-lg w-[380px] border shadow-xl transform transition-all scale-100 ${type === 'danger' ? 'border-red-500/50' : 'border-[#26272D]'}`}>
+    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm animate-in fade-in duration-200">
+      <div className={`w-full max-w-[380px] rounded-lg border bg-[#313338] p-4 shadow-xl transition-all sm:p-6 ${type === 'danger' ? 'border-red-500/50' : 'border-[#26272D]'}`}>
         <h3 className="text-gray-100 text-lg font-semibold mb-2">{title}</h3>
         <p className="text-sm text-gray-400 mb-6 leading-relaxed">
           {message}

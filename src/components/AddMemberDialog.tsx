@@ -77,8 +77,8 @@ export function AddMemberDialog({ isOpen, onClose, roomId, onAdded }: AddMemberM
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/50 z-[100] flex items-center justify-center">
-      <div className="bg-[#313338] p-6 rounded-lg w-96 border border-[#26272D] shadow-xl">
+    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 p-4">
+      <div className="w-full max-w-[24rem] rounded-lg border border-[#26272D] bg-[#313338] p-4 shadow-xl sm:p-6">
         <div className="flex justify-between items-center mb-4">
              <h2 className="text-xl font-bold text-gray-100">Add Friend to Group</h2>
              <Button variant="ghost" size="icon" onClick={onClose} className="text-gray-400 hover:text-white">

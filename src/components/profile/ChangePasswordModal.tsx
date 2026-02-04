@@ -56,12 +56,12 @@ export function ChangePasswordModal({ onClose }: Props) {
 
   return (
     <div
-      className="fixed inset-0 bg-black/70 flex items-center justify-center z-50"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4"
       onClick={onClose}
     >
       {/* MODAL CARD */}
       <Card
-        className="p-6 bg-card w-[420px] max-w-[90%]"
+        className="w-full max-w-[420px] bg-card p-4 sm:p-6"
         onClick={(e) => e.stopPropagation()}
       >
         <h3 className="text-white mb-4">Change Password</h3>

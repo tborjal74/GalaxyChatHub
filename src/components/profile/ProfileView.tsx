@@ -125,8 +125,8 @@ export function ProfileView({
       />
 
       {/* Content */}
-      <div className="flex-1 overflow-y-auto p-6">
-        <div className="max-w-4xl mx-auto space-y-6">
+      <div className="min-h-0 flex-1 overflow-y-auto p-4 sm:p-6">
+        <div className="mx-auto max-w-4xl space-y-6">
           {/* Profile Card */}
           <Card className="bg-card/50 backdrop-blur border-border p-6">
             <div className="flex flex-col md:flex-row gap-6">

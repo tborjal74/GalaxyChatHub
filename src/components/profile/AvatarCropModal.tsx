@@ -35,8 +35,8 @@ export function AvatarCropModal({
   if (!file) return null;
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/70 flex items-center justify-center">
-      <div className="bg-card p-4 rounded-lg w-[360px]">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4">
+      <div className="w-full max-w-[360px] rounded-lg bg-card p-4">
         <div className="relative w-full h-[300px] bg-black rounded overflow-hidden">
           <Cropper
             image={imageUrl}
