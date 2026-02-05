@@ -19,6 +19,7 @@ export function FriendsView({ onChatSelect }: FriendsViewProps) {
   const [requests, setRequests] = useState<any[]>([]);
   const [newFriendName, setNewFriendName] = useState("");
   const [modal, setModal] = useState({ isOpen: false, title: "", message: "", type: "info" as "danger"|"info"|"alert" });
+  const [friendToRemove, setFriendToRemove] = useState<Friend | null>(null);
 
   const token = localStorage.getItem('token');
 
@@ -130,6 +131,54 @@ export function FriendsView({ onChatSelect }: FriendsViewProps) {
     fetchRequests();
   };
 
+  const rejectRequest = async (requestId: number) => {
+    await fetch(`${API_URL}/api/friends/reject`, {
+        method: 'POST',
+        headers: {  
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}` 
+        },
+        body: JSON.stringify({ requestId })
+    });
+    fetchRequests();
+  };
+
+  const confirmRemoveFriend = async () => {
+    if (!friendToRemove) return;
+    
+    try {
+        const res = await fetch(`${API_URL}/api/friends/remove`, {
+            method: 'POST',
+            headers: {  
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${token}` 
+            },
+            body: JSON.stringify({ friendId: friendToRemove.id })
+        });
+        
+        const data = await res.json();
+        
+        if (data.success) {
+            setFriends(prev => prev.filter(f => f.id !== friendToRemove.id));
+            setFriendToRemove(null);
+        } else {
+             setModal({
+                isOpen: true,
+                title: "Error",
+                message: data.message || "Failed to remove friend",
+                type: "alert"
+             });
+        }
+    } catch(e) {
+        setModal({
+            isOpen: true,
+            title: "Error",
+            message: "An unexpected error occurred",
+            type: "alert"
+        });
+    }
+  };
+
   return (
     <div className="flex min-h-0 flex-1 flex-col overflow-y-auto p-4 text-white sm:p-6">
       <h2 className="mb-4 text-xl font-bold sm:text-2xl">Friends</h2>
@@ -151,7 +200,10 @@ export function FriendsView({ onChatSelect }: FriendsViewProps) {
         {requests.map(req => (
             <div key={req.id} className="mb-2 flex flex-col gap-2 rounded bg-gray-900 p-3 sm:flex-row sm:items-center sm:justify-between">
                 <span className="min-w-0 truncate text-sm sm:text-base">{req.sender.username} wants to be friends</span>
-                <button onClick={() => acceptRequest(req.id)} className="h-10 shrink-0 self-end rounded bg-green-600 px-3 py-1.5 text-sm cursor-pointer hover:bg-green-700 sm:self-center">Accept</button>
+                <div className="flex shrink-0 self-end gap-2 sm:self-center">
+                  <button onClick={() => acceptRequest(req.id)} className="h-10 rounded bg-green-600 px-3 py-1.5 text-sm cursor-pointer hover:bg-green-700">Accept</button>
+                  <button onClick={() => rejectRequest(req.id)} className="h-10 rounded bg-red-600 px-3 py-1.5 text-sm cursor-pointer hover:bg-red-700">Reject</button>
+                </div>
             </div>
         ))}
       </div>
@@ -170,12 +222,20 @@ export function FriendsView({ onChatSelect }: FriendsViewProps) {
                         <div className="text-xs text-gray-400">{friend.status}</div>
                     </div>
                 </div>
-                <button 
-                  className="h-10 shrink-0 self-end rounded border border-gray-700 bg-gray-800 px-3 py-1.5 text-sm text-gray-400 hover:border-purple-600 hover:bg-purple-600 hover:text-white cursor-pointer sm:self-center"
-                  onClick={() => onChatSelect?.(friend)}
-                >
-                  Message
-                </button>
+                <div className="flex shrink-0 gap-2 self-end sm:self-center">
+                    <button 
+                      className="h-10 rounded border border-gray-700 bg-gray-600 px-3 py-1.5 text-sm text-gray-200 hover:bg-gray-700 cursor-pointer"
+                      onClick={() => onChatSelect?.(friend)}
+                    >
+                      Message
+                    </button>
+                    <button 
+                      className="h-10 rounded border border-red-900 bg-red-900/20 px-3 py-1.5 text-sm text-red-500 hover:bg-red-900/40 hover:text-red-400 cursor-pointer"
+                      onClick={() => setFriendToRemove(friend)}
+                    >
+                      Remove
+                    </button>
+                </div>
             </div>
         ))}
       </div>
@@ -186,6 +246,16 @@ export function FriendsView({ onChatSelect }: FriendsViewProps) {
           message={modal.message}
           type={modal.type}
           onClose={() => setModal(prev => ({ ...prev, isOpen: false }))}
+      />
+
+      <ConfirmModal 
+          isOpen={!!friendToRemove}
+          title="Remove Friend"
+          message={`Are you sure you want to remove ${friendToRemove?.username} from your friends list?`}
+          type="danger"
+          confirmText="Remove"
+          onClose={() => setFriendToRemove(null)}
+          onConfirm={confirmRemoveFriend}
       />
     </div>
   );

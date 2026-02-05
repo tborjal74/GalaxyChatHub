@@ -21,19 +21,27 @@ interface User {
 
 function App() {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
-  const [activeView, setActiveView] = useState<"friends" | "rooms" | "profile">(
-    "friends",
-  );
+  const [activeView, setActiveView] = useState<"friends" | "rooms" | "profile">(() => {
+      const saved = localStorage.getItem('activeView');
+      return (saved as "friends" | "rooms" | "profile") || "friends";
+  });
   const [isConnected, setIsConnected] = useState(socket.connected);
   const [selectedFriend, setSelectedFriend] = useState<any | null>(null);
   const selectedFriendRef = useRef(selectedFriend);
   const [rooms, setRooms] = useState<any[]>([]);
+  const activeViewRef = useRef(activeView);
   const [modal, setModal] = useState({ isOpen: false, title: "", message: "", type: "info" as "danger"|"info"|"alert", onConfirm: undefined as undefined|(() => void) });
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const chatRestoredRef = useRef(false);
 
   useEffect(() => {
-      selectedFriendRef.current = selectedFriend;
+    selectedFriendRef.current = selectedFriend;
   }, [selectedFriend]);
+
+  useEffect(() => {
+    localStorage.setItem('activeView', activeView);
+    activeViewRef.current = activeView;
+  }, [activeView]);
 
   // Restore session on mount
   useEffect(() => {
@@ -158,7 +166,6 @@ function App() {
             combined.push(...dataRooms.data.map((r: any) => ({ ...r, id: `room_${r.id}`, originalId: r.id, type: 'room' })));
        }
        setRooms(combined);
-       restoreSelectedChat(combined);
      } catch(e) { console.error(e); }
   };
 
@@ -166,19 +173,23 @@ function App() {
      if(currentUser) fetchRooms();
   }, [currentUser, activeView]);
 
-  // Restore selected chat from localStorage after rooms are loaded (so messages load from DB after refresh)
-  const restoreSelectedChat = (roomsList: any[]) => {
-    try {
-      const stored = localStorage.getItem('selectedChat');
-      if (!stored || roomsList.length === 0) return;
-      const { originalId, type } = JSON.parse(stored);
-      const match = roomsList.find((r: any) => Number(r.originalId) === Number(originalId) && r.type === type);
-      if (match) {
-        setSelectedFriend(match);
-        setActiveView('rooms');
+  // Restore selected chat from localStorage after rooms are loaded (only once on mount)
+  useEffect(() => {
+      if (rooms.length > 0 && !chatRestoredRef.current) {
+        try {
+          const stored = localStorage.getItem('selectedChat');
+          if (stored) {
+            const { originalId, type } = JSON.parse(stored);
+            const match = rooms.find((r: any) => Number(r.originalId) === Number(originalId) && r.type === type);
+            if (match) {
+              setSelectedFriend(match);
+              // We do not force activeView here, relying on persisted activeView state
+            }
+          }
+        } catch (_) { /* ignore */ }
+        chatRestoredRef.current = true;
       }
-    } catch (_) { /* ignore */ }
-  }; 
+  }, [rooms]);
 
   const handleLogin = () => {
     loadUser();
