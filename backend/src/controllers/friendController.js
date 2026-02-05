@@ -122,3 +122,61 @@ export const acceptFriendRequest = async (req, res) => {
       return errorResponse(res, "Failed to accept request", 500, error);
     }
   };
+
+// Reject a friend request
+export const rejectFriendRequest = async (req, res) => {
+    try {
+      const userId = req.user.userId;
+      const { requestId } = req.body;
+  
+      const friendship = await prisma.friend.findUnique({
+        where: { id: requestId }
+      });
+  
+      if (!friendship || friendship.receiverId !== userId) {
+        return errorResponse(res, "Request not found or unauthorized", 404);
+      }
+  
+      await prisma.friend.delete({
+        where: { id: requestId }
+      });
+  
+      return successResponse(res, null, "Friend request rejected");
+    } catch (error) {
+      return errorResponse(res, "Failed to reject request", 500, error);
+    }
+  };
+
+// Remove a friend
+export const removeFriend = async (req, res) => {
+    try {
+      const userId = req.user.userId;
+      const { friendId } = req.body;
+  
+      const friendUserId = parseInt(friendId);
+      if (isNaN(friendUserId)) return errorResponse(res, "Invalid friend ID", 400);
+
+      // Find the friendship
+      const friendship = await prisma.friend.findFirst({
+        where: {
+            OR: [
+                { senderId: userId, receiverId: friendUserId, status: 'ACCEPTED' },
+                { senderId: friendUserId, receiverId: userId, status: 'ACCEPTED' }
+            ]
+        }
+      });
+  
+      if (!friendship) {
+        return errorResponse(res, "Friendship not found", 404);
+      }
+  
+      await prisma.friend.delete({
+        where: { id: friendship.id }
+      });
+  
+      return successResponse(res, null, "Friend removed successfully");
+    } catch (error) {
+        console.log(error);
+      return errorResponse(res, "Failed to remove friend", 500, error);
+    }
+  };
