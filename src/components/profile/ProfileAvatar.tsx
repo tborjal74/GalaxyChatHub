@@ -74,14 +74,14 @@ export function ProfileAvatar({
               const file = e.target.files?.[0];
               if (!file) return;
 
-              onSelectImage(file); // ✅ THIS opens the modal
+              onSelectImage(file);
             }}
           />
 
           <Button
             variant="outline"
             size="sm"
-            className="border-border text-white"
+            className="border-border text-white cursor-pointer"
             onClick={() => fileInputRef.current?.click()}
           >
             Change Avatar
@@ -93,7 +93,7 @@ export function ProfileAvatar({
         <Button
           variant="ghost"
           size="sm"
-          className="text-muted-foreground"
+          className="text-muted-foreground cursor-pointer"
           onClick={handleUndoAvatar}
         >
           Remove Avatar

@@ -18,6 +18,7 @@ export function AvatarCropModal({
   const [zoom, setZoom] = useState(1);
   const [croppedAreaPixels, setCroppedAreaPixels] =
     useState<any>(null);
+  const [isSaving, setIsSaving] = useState(false);
 
   const imageUrl = useMemo(() => {
     if (!file) return "";
@@ -34,10 +35,38 @@ export function AvatarCropModal({
 
   if (!file) return null;
 
+    const handleSave = async () => {
+    if (!croppedAreaPixels) return;
+
+    try {
+      setIsSaving(true);                
+
+      const blob = await getCroppedImg(
+        imageUrl,
+        croppedAreaPixels
+      );
+
+      const croppedFile = new File(
+        [blob],
+        "avatar.png",
+        { type: blob.type }
+      );
+
+      const previewUrl = URL.createObjectURL(croppedFile);
+
+      await onSave(croppedFile, previewUrl);
+      onClose();
+    } finally {
+      setIsSaving(false);               
+    }
+  };
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4">
       <div className="w-full max-w-[360px] rounded-lg bg-card p-4">
+
         <div className="relative w-full h-[300px] bg-black rounded overflow-hidden">
+
           <Cropper
             image={imageUrl}
             crop={crop}
@@ -49,6 +78,15 @@ export function AvatarCropModal({
               setCroppedAreaPixels(pixels)
             }
           />
+
+          {/* Overlay while processing */}
+          {isSaving && (
+            <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
+              <span className="text-white text-sm">
+                Processing image...
+              </span>
+            </div>
+          )}
         </div>
 
         <input
@@ -59,36 +97,25 @@ export function AvatarCropModal({
           value={zoom}
           onChange={(e) => setZoom(Number(e.target.value))}
           className="w-full mt-3"
+          disabled={isSaving}          
         />
 
         <div className="flex justify-end gap-2 mt-4">
-          <Button variant="outline" onClick={onClose}>
+          <Button
+            variant="outline"
+            onClick={onClose}
+            disabled={isSaving}
+            className="cursor-pointer"       
+          >
             Cancel
           </Button>
 
           <Button
-            onClick={async () => {
-              if (!croppedAreaPixels) return;
-
-              const blob = await getCroppedImg(
-                imageUrl,
-                croppedAreaPixels
-              );
-
-              const croppedFile = new File(
-                [blob],
-                "avatar.png",
-                { type: blob.type }
-              );
-
-              const previewUrl =
-                URL.createObjectURL(croppedFile);
-
-              await onSave(croppedFile, previewUrl);
-              onClose();
-            }}
+            onClick={handleSave}
+            disabled={isSaving}  
+            className="cursor-pointer"     
           >
-            Save
+            {isSaving ? "Saving..." : "Save"}
           </Button>
         </div>
       </div>

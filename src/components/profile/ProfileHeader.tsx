@@ -32,7 +32,7 @@ export function ProfileHeader({
             <Button
               onClick={onCancel}
               variant="outline"
-              className="border-border text-white hover:bg-secondary"
+              className="border-border text-white hover:bg-secondary cursor-pointer"
             >
               <X className="w-4 h-4 mr-2" />
               Cancel
@@ -40,7 +40,7 @@ export function ProfileHeader({
 
             <Button
               onClick={onSave}
-              className="bg-primary hover:bg-primary/90 text-white"
+              className="bg-primary hover:bg-primary/90 text-white cursor-pointer"
             >
               <Save className="w-4 h-4 mr-2" />
               Save Changes
