@@ -25,8 +25,46 @@ export function FriendsView({ onChatSelect }: FriendsViewProps) {
     type: "info" as "danger" | "info" | "alert",
   });
   const [friendToRemove, setFriendToRemove] = useState<Friend | null>(null);
+  
+  const [searchResults, setSearchResults] = useState<Friend[]>([]);
+  const [showResults, setShowResults] = useState(false);
 
   const token = localStorage.getItem("token");
+
+  useEffect(() => {
+    const searchUsers = async () => {
+      if (!newFriendName.trim()) {
+        setSearchResults([]);
+        return;
+      }
+
+      try {
+        const res = await fetch(
+          `${API_URL}/api/users?search=${encodeURIComponent(newFriendName)}`,
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          },
+        );
+        const data = await res.json();
+
+        if (data.success) {
+          // Filter out existing friends
+          const filtered = data.data.filter(
+            (u: Friend) => !friends.some((f) => f.username === u.username),
+          );
+          setSearchResults(filtered);
+        }
+      } catch (error) {
+        console.error("Search failed", error);
+      }
+    };
+
+    const timeoutId = setTimeout(() => {
+      searchUsers();
+    }, 300);
+
+    return () => clearTimeout(timeoutId);
+  }, [newFriendName, token, friends]);
 
   const fetchFriends = async () => {
     const res = await fetch(`${API_URL}/api/friends`, {
@@ -196,14 +234,47 @@ export function FriendsView({ onChatSelect }: FriendsViewProps) {
     <div className="flex min-h-0 flex-1 flex-col overflow-y-auto p-4 text-white sm:p-6">
       <h2 className="mb-4 text-xl font-bold sm:text-2xl">Friends</h2>
 
-      <div className="mb-6 flex flex-col gap-2 sm:flex-row sm:gap-2">
-        <input
-          className="w-full sm:w-64 max-w-md rounded border border-gray-700 bg-gray-800 p-2.5 text-sm outline-none transition-colors placeholder:text-gray-500 focus:border-purple-500"
-          placeholder="Add friend by username"
-          value={newFriendName}
-          onChange={(e) => setNewFriendName(e.target.value)}
-          onKeyDown={(e) => e.key === "Enter" && addFriend()}
-        />
+      <div className="mb-6 flex flex-col gap-2 sm:flex-row sm:gap-2 z-10 relative">
+        <div className="relative w-full sm:w-64 max-w-md">
+          <input
+            className="w-full rounded border border-gray-700 bg-gray-800 p-2.5 text-sm outline-none transition-colors placeholder:text-gray-500 focus:border-purple-500"
+            placeholder="Add friend by username"
+            value={newFriendName}
+            onChange={(e) => setNewFriendName(e.target.value)}
+            onFocus={() => setShowResults(true)}
+            onBlur={() => setTimeout(() => setShowResults(false), 200)}
+            onKeyDown={(e) => e.key === "Enter" && addFriend()}
+          />
+          {showResults && searchResults.length > 0 && (
+            <div className="absolute top-full mt-1 w-full rounded border border-gray-700 bg-gray-900 shadow-lg max-h-60 overflow-y-auto z-50">
+              {searchResults.map((user) => (
+                <div
+                  key={user.id}
+                  className="flex items-center gap-2 p-2 hover:bg-gray-800 cursor-pointer text-gray-200"
+                  onMouseDown={() => {
+                    setNewFriendName(user.username);
+                    setShowResults(false);
+                  }}
+                >
+                  <div className="h-6 w-6 rounded-full overflow-hidden bg-gray-700 shrink-0">
+                    {user.avatarUrl ? (
+                      <img
+                        src={user.avatarUrl}
+                        className="h-full w-full object-cover"
+                        alt={user.username}
+                      />
+                    ) : (
+                      <div className="flex h-full w-full items-center justify-center text-xs font-bold text-white bg-purple-500">
+                        {user.username?.[0]?.toUpperCase()}
+                      </div>
+                    )}
+                  </div>
+                  <span className="text-sm truncate">{user.username}</span>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
         <button
           onClick={addFriend}
           className="h-11 shrink-0 rounded bg-purple-600 px-4 py-2 text-sm font-medium hover:bg-purple-700 cursor-pointer sm:h-10"
