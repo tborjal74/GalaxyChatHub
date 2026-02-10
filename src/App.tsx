@@ -4,6 +4,7 @@ import { Sidebar } from "./components/AppSidebar";
 import "./App.css";
 import { ProfileView } from "./components/profile/ProfileView";
 import { FriendsView } from "./components/FriendsView";
+import { FriendProfileSidebar } from "./components/profile/FriendProfileSidebar";
 import { ChatArea } from "./components/ChatArea";
 import { socket } from "./socket";
 import { ConfirmModal } from "./components/ui/confirm-modal";
@@ -26,6 +27,7 @@ function App() {
   );
   const [isConnected, setIsConnected] = useState(socket.connected);
   const [selectedFriend, setSelectedFriend] = useState<any | null>(null);
+  const [openedProfileUserId, setOpenedProfileUserId] = useState<number | null>(null);
   const selectedFriendRef = useRef(selectedFriend);
   const [rooms, setRooms] = useState<any[]>([]);
   const [modal, setModal] = useState({ isOpen: false, title: "", message: "", type: "info" as "danger"|"info"|"alert", onConfirm: undefined as undefined|(() => void) });
@@ -290,34 +292,43 @@ function App() {
       </div>
 
       <main className="flex min-w-0 flex-1 flex-col pt-14 md:pt-0">
-      {activeView === "friends" && (
-        <FriendsView 
-             onChatSelect={(friend) => {
-                 const chat = { ...friend, id: `dm_${friend.id}`, originalId: friend.id, type: 'dm' as const };
-                 setSelectedFriend(chat);
-                 localStorage.setItem('selectedChat', JSON.stringify({ originalId: friend.id, type: 'dm' }));
-                 setActiveView('rooms');
-             }}
-        />
-      )}
+      <div className="flex-1 min-h-0 flex">
+        {activeView === "friends" && (
+          <FriendsView 
+               onChatSelect={(friend) => {
+                   const chat = { ...friend, id: `dm_${friend.id}`, originalId: friend.id, type: 'dm' as const };
+                   setSelectedFriend(chat);
+                   localStorage.setItem('selectedChat', JSON.stringify({ originalId: friend.id, type: 'dm' }));
+                   setActiveView('rooms');
+               }}
+               onOpenProfile={(id) => {
+                  setOpenedProfileUserId(Number(id));
+               }}
+          />
+        )}
       
-      {activeView === "rooms" && (
-        <ChatArea 
-           currentUserId={JSON.parse(localStorage.getItem('user') || '{}').id} 
-           selectedFriend={selectedFriend} 
-           onMessageSent={fetchRooms}
-           isConnected={isConnected}
-           onBack={() => { setSelectedFriend(undefined); localStorage.removeItem('selectedChat'); }}
-        />
-      )}
+        {activeView === "rooms" && (
+          <ChatArea 
+             currentUserId={JSON.parse(localStorage.getItem('user') || '{}').id} 
+             selectedFriend={selectedFriend} 
+             onMessageSent={fetchRooms}
+             isConnected={isConnected}
+             onBack={() => { setSelectedFriend(undefined); localStorage.removeItem('selectedChat'); }}
+          />
+        )}
       
-      {activeView === "profile" && (
-        <ProfileView
-          user={currentUser}
-          onUpdateProfile={handleUpdateProfile}
-          onLogout={handleLogout}
-        />
-      )}
+        {activeView === "profile" && (
+          <ProfileView
+            user={currentUser}
+            onUpdateProfile={handleUpdateProfile}
+            onLogout={handleLogout}
+          />
+        )}
+
+        {openedProfileUserId && (
+          <FriendProfileSidebar userId={openedProfileUserId} onClose={() => setOpenedProfileUserId(null)} />
+        )}
+      </div>
 
       <ConfirmModal 
           isOpen={modal.isOpen}

@@ -12,6 +12,7 @@ interface Friend {
 
 interface FriendsViewProps {
     onChatSelect?: (friend: Friend) => void;
+  onOpenProfile?: (friendId: string) => void;
 }
 
 export function FriendsView({ onChatSelect }: FriendsViewProps) {
@@ -166,16 +167,27 @@ export function FriendsView({ onChatSelect }: FriendsViewProps) {
                         {friend.username?.[0]?.toUpperCase()}
                     </div>
                     <div className="min-w-0">
-                        <div className="truncate font-medium">{friend.username}</div>
+                        <div
+                          className="truncate font-medium cursor-pointer hover:text-purple-400"
+                          onClick={() => onOpenProfile?.(friend.id)}
+                        >{friend.username}</div>
                         <div className="text-xs text-gray-400">{friend.status}</div>
                     </div>
                 </div>
-                <button 
-                  className="h-10 shrink-0 self-end rounded border border-gray-700 bg-gray-800 px-3 py-1.5 text-sm text-gray-400 hover:border-purple-600 hover:bg-purple-600 hover:text-white cursor-pointer sm:self-center"
-                  onClick={() => onChatSelect?.(friend)}
-                >
-                  Message
-                </button>
+                <div className="flex gap-2">
+                  <button 
+                    className="h-10 shrink-0 rounded border border-gray-700 bg-gray-800 px-3 py-1.5 text-sm text-gray-400 hover:border-purple-600 hover:bg-purple-600 hover:text-white cursor-pointer"
+                    onClick={() => onChatSelect?.(friend)}
+                  >
+                    Message
+                  </button>
+                  <button
+                    className="h-10 shrink-0 rounded border border-gray-700 bg-gray-800 px-3 py-1.5 text-sm text-gray-400 hover:border-purple-600 hover:bg-purple-600 hover:text-white cursor-pointer"
+                    onClick={() => onOpenProfile?.(friend.id)}
+                  >
+                    View
+                  </button>
+                </div>
             </div>
         ))}
       </div>
