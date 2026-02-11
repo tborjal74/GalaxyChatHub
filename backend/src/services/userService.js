@@ -2,15 +2,26 @@
 import { users } from '../models/userModel.js';
 import { prisma } from "../database/database.js";
 
-export const getAllUsers = async () => {
+export const getAllUsers = async (query = "") => {
+  const where = query
+    ? {
+        OR: [
+          { username: { contains: query, mode: "insensitive" } },
+          { email: { contains: query, mode: "insensitive" } },
+        ],
+      }
+    : {};
+
   return await prisma.user.findMany({
+    where,
     select: {
       id: true,
       username: true,
       email: true,
       avatarUrl: true,
-      status: true
-    }
+      status: true,
+    },
+    take: 20,
   });
 };
 

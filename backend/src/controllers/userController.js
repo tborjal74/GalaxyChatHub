@@ -6,7 +6,8 @@ import bcrypt from 'bcryptjs';
 
 export const getUsers = async (req, res) => {
   try {
-    const users = await userService.getAllUsers();
+    const { search } = req.query;
+    const users = await userService.getAllUsers(search);
     return successResponse(res, users, "Users retrieved successfully");
   } catch (error) {
     return errorResponse(res, "Failed to fetch users", 500, error);
