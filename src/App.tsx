@@ -88,20 +88,33 @@ function App() {
   }, []);
 
   useEffect(() => {
-    function onConnect() {
-      setIsConnected(true);
-      console.log("Socket connected!");
-      
-      // Register user for status tracking
-      if (currentUser?.id) {
-         socket.emit('register_user', currentUser.id);
-      }
-    }
 
-    function onDisconnect() {
-      setIsConnected(false);
-      console.log("Socket disconnected!");
-    }
+    if (!currentUser) return;
+    
+   function onConnect() {
+    setIsConnected(true);
+    console.log("Socket connected!");
+    socket.emit('register_user', currentUser?.id);
+  }
+
+  function onDisconnect() {
+    setIsConnected(false);
+    console.log("Socket disconnected!");
+  }
+
+  // Attach listeners
+  socket.on("connect", onConnect);
+  socket.on("disconnect", onDisconnect);
+  socket.on("room_deleted", onRoomDeleted);
+
+  // Connect if not already connected
+  if (!socket.connected) {
+    socket.connect();
+  } else {
+    // If already connected (e.g. after a re-render), 
+    // ensure the server knows who we are.
+    socket.emit('register_user', currentUser.id);
+  }
 
     function onRoomDeleted(payload: { roomId: number, deleterId?: number }) {
         console.log("Room deleted:", payload.roomId);
@@ -142,7 +155,6 @@ function App() {
       socket.off("connect", onConnect);
       socket.off("disconnect", onDisconnect);
       socket.off("room_deleted", onRoomDeleted);
-      socket.disconnect();
     };
   }, [currentUser]);
 

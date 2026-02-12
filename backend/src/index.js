@@ -63,50 +63,47 @@ app.use(
   express.static(path.join(__dirname, "uploads"))
 );
 
-// Track online users: userId -> socketId
-const onlineUsers = new Map();
+const onlineUsers = new Map(); // uId -> Set of socketIds
+const offlineTimeouts = new Map(); // uId -> setTimeout reference
 
 // Socket.IO connection handler
 io.on('connection', (socket) => {
-  console.log('User connected:', socket.id);
+  
+  socket.on('register_user', async (userId) => {
+    if (!userId) return;
+    const uId = parseInt(userId);
+    if (isNaN(uId)) return;
 
- socket.on('register_user', async (userId) => {
-  if (!userId) return;
+    socket.data.userId = uId;
 
-  const uId = parseInt(userId);
-  if (isNaN(uId)) return;
-
-  socket.data.userId = uId;
-
-  // ----- CREATE OR GET SET -----
-  if (!onlineUsers.has(uId)) {
-    onlineUsers.set(uId, new Set());
-  }
-
-  const sockets = onlineUsers.get(uId);
-
-  // ----- ADD SOCKET FIRST -----
-  sockets.add(socket.id);
-
-  console.log(`User ${uId} registered. Active sockets:`, sockets.size);
-
-  try {
-    // ONLY mark online if this is the FIRST socket
-    if (sockets.size === 1) {
-      await prisma.user.update({
-        where: { id: uId },
-        data: { status: 'ONLINE' }
-      });
-
-      io.emit('user_status_change', {
-        userId: uId,
-        status: 'online'
-      });
+    // 1. CANCEL PENDING OFFLINE STATUS
+    // If the user refreshed, they re-connected before the 5s timer finished.
+    if (offlineTimeouts.has(uId)) {
+      clearTimeout(offlineTimeouts.get(uId));
+      offlineTimeouts.delete(uId);
+      console.log(`User ${uId} reconnected quickly. Cancelled offline status.`);
     }
-  } catch (e) {
-    console.error("Status update error", e);
-  }
-});
+
+    // 2. TRACK SOCKET
+    if (!onlineUsers.has(uId)) {
+      onlineUsers.set(uId, new Set());
+    }
+    const sockets = onlineUsers.get(uId);
+    sockets.add(socket.id);
+
+    // 3. UPDATE DB ONLY IF NECESSARY
+    if (sockets.size === 1) {
+      try {
+        await prisma.user.update({
+          where: { id: uId },
+          data: { status: 'ONLINE' }
+        });
+        io.emit('user_status_change', { userId: uId, status: 'online' });
+      } catch (e) {
+        console.error("Status update error", e);
+      }
+    }
+  });
 
 
   
@@ -181,43 +178,44 @@ io.on('connection', (socket) => {
      }
   });
 
-  socket.on('disconnect', async () => {
-  console.log('User disconnected:', socket.id);
+socket.on('disconnect', async () => {
+    const uId = socket.data.userId;
+    if (!uId) return;
 
-  const uId = socket.data.userId;
-  if (!uId) return;
+    const sockets = onlineUsers.get(uId);
+    if (!sockets) return;
 
-  const sockets = onlineUsers.get(uId);
-  if (!sockets) return;
+    sockets.delete(socket.id);
 
-  sockets.delete(socket.id);
+    if (sockets.size === 0) {
+      // ⬇️ CRITICAL FIX: Clear any existing timer for this user first
+      if (offlineTimeouts.has(uId)) {
+        clearTimeout(offlineTimeouts.get(uId));
+      }
 
-  console.log(`User ${uId} remaining connections:`, sockets.size);
+      const timeout = setTimeout(async () => {
+        const currentSockets = onlineUsers.get(uId);
+        // Double check: are they STILL disconnected?
+        if (!currentSockets || currentSockets.size === 0) {
+          onlineUsers.delete(uId);
+          try {
+            await prisma.user.update({
+              where: { id: uId },
+              data: { status: 'OFFLINE' }
+            });
+            io.emit('user_status_change', { userId: uId, status: 'offline' });
+            console.log(`User ${uId} is now officially OFFLINE`);
+          } catch (e) {
+            console.error("Disconnect status update error", e);
+          }
+        }
+        offlineTimeouts.delete(uId);
+      }, 5000);
 
-  if (sockets.size === 0) {
-    onlineUsers.delete(uId);
-
-    try {
-      await prisma.user.update({
-        where: { id: uId },
-        data: { status: 'OFFLINE' }
-      });
-
-      io.emit('user_status_change', {
-        userId: uId,
-        status: 'offline'
-      });
-
-      console.log(`User ${uId} is now OFFLINE`);
-    } catch (e) {
-      console.error("Status update error", e);
+      offlineTimeouts.set(uId, timeout);
     }
-  }
 });
-
-
-}); 
-
+});
 
 // Basic route
 app.get('/', (req, res) => {
