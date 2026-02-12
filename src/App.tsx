@@ -4,6 +4,7 @@ import { Sidebar } from "./components/AppSidebar";
 import "./App.css";
 import { ProfileView } from "./components/profile/ProfileView";
 import { FriendsView } from "./components/FriendsView";
+import { FriendProfileSidebar } from "./components/profile/FriendProfileSidebar";
 import { ChatArea } from "./components/ChatArea";
 import { socket } from "./socket";
 import { ConfirmModal } from "./components/ui/confirm-modal";
@@ -27,6 +28,7 @@ function App() {
   });
   const [isConnected, setIsConnected] = useState(socket.connected);
   const [selectedFriend, setSelectedFriend] = useState<any | null>(null);
+  const [openedProfileUserId, setOpenedProfileUserId] = useState<number | null>(null);
   const selectedFriendRef = useRef(selectedFriend);
   const [rooms, setRooms] = useState<any[]>([]);
   const activeViewRef = useRef(activeView);
@@ -86,20 +88,33 @@ function App() {
   }, []);
 
   useEffect(() => {
-    function onConnect() {
-      setIsConnected(true);
-      console.log("Socket connected!");
-      
-      // Register user for status tracking
-      if (currentUser?.id) {
-         socket.emit('register_user', currentUser.id);
-      }
-    }
 
-    function onDisconnect() {
-      setIsConnected(false);
-      console.log("Socket disconnected!");
-    }
+    if (!currentUser) return;
+    
+   function onConnect() {
+    setIsConnected(true);
+    console.log("Socket connected!");
+    socket.emit('register_user', currentUser?.id);
+  }
+
+  function onDisconnect() {
+    setIsConnected(false);
+    console.log("Socket disconnected!");
+  }
+
+  // Attach listeners
+  socket.on("connect", onConnect);
+  socket.on("disconnect", onDisconnect);
+  socket.on("room_deleted", onRoomDeleted);
+
+  // Connect if not already connected
+  if (!socket.connected) {
+    socket.connect();
+  } else {
+    // If already connected (e.g. after a re-render), 
+    // ensure the server knows who we are.
+    socket.emit('register_user', currentUser.id);
+  }
 
     function onRoomDeleted(payload: { roomId: number, deleterId?: number }) {
         console.log("Room deleted:", payload.roomId);
@@ -125,19 +140,21 @@ function App() {
     socket.on("room_deleted", onRoomDeleted);
 
     // Connect only if we have a user (optional strategy)
-    if (currentUser) {
-      if (!socket.connected) socket.connect();
-      // If already connected, register immediately (handles page refreshes where socket might reconnect fast)
-      if (socket.connected) {
-         socket.emit('register_user', currentUser.id);
-      }
+   if (currentUser) {
+  socket.connect();
+
+  // Always emit after short delay to guarantee connection
+  setTimeout(() => {
+    if (socket.connected) {
+      socket.emit('register_user', currentUser.id);
     }
+  }, 200);
+}
 
     return () => {
       socket.off("connect", onConnect);
       socket.off("disconnect", onDisconnect);
       socket.off("room_deleted", onRoomDeleted);
-      socket.disconnect();
     };
   }, [currentUser]);
 
@@ -301,34 +318,43 @@ function App() {
       </div>
 
       <main className="flex min-w-0 flex-1 flex-col pt-14 md:pt-0">
-      {activeView === "friends" && (
-        <FriendsView 
-             onChatSelect={(friend) => {
-                 const chat = { ...friend, id: `dm_${friend.id}`, originalId: friend.id, type: 'dm' as const };
-                 setSelectedFriend(chat);
-                 localStorage.setItem('selectedChat', JSON.stringify({ originalId: friend.id, type: 'dm' }));
-                 setActiveView('rooms');
-             }}
-        />
-      )}
+      <div className="flex-1 min-h-0 flex">
+        {activeView === "friends" && (
+          <FriendsView 
+               onChatSelect={(friend) => {
+                   const chat = { ...friend, id: `dm_${friend.id}`, originalId: friend.id, type: 'dm' as const };
+                   setSelectedFriend(chat);
+                   localStorage.setItem('selectedChat', JSON.stringify({ originalId: friend.id, type: 'dm' }));
+                   setActiveView('rooms');
+               }}
+               onOpenProfile={(id) => {
+                  setOpenedProfileUserId(Number(id));
+               }}
+          />
+        )}
       
-      {activeView === "rooms" && (
-        <ChatArea 
-           currentUserId={JSON.parse(localStorage.getItem('user') || '{}').id} 
-           selectedFriend={selectedFriend} 
-           onMessageSent={fetchRooms}
-           isConnected={isConnected}
-           onBack={() => { setSelectedFriend(undefined); localStorage.removeItem('selectedChat'); }}
-        />
-      )}
+        {activeView === "rooms" && (
+          <ChatArea 
+             currentUserId={JSON.parse(localStorage.getItem('user') || '{}').id} 
+             selectedFriend={selectedFriend} 
+             onMessageSent={fetchRooms}
+             isConnected={isConnected}
+             onBack={() => { setSelectedFriend(undefined); localStorage.removeItem('selectedChat'); }}
+          />
+        )}
       
-      {activeView === "profile" && (
-        <ProfileView
-          user={currentUser}
-          onUpdateProfile={handleUpdateProfile}
-          onLogout={handleLogout}
-        />
-      )}
+        {activeView === "profile" && (
+          <ProfileView
+            user={currentUser}
+            onUpdateProfile={handleUpdateProfile}
+            onLogout={handleLogout}
+          />
+        )}
+
+        {openedProfileUserId && (
+          <FriendProfileSidebar userId={openedProfileUserId} onClose={() => setOpenedProfileUserId(null)} />
+        )}
+      </div>
 
       <ConfirmModal 
           isOpen={modal.isOpen}

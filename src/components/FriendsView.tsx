@@ -12,9 +12,10 @@ interface Friend {
 
 interface FriendsViewProps {
   onChatSelect?: (friend: Friend) => void;
+  onOpenProfile?: (friendId: string) => void;
 }
 
-export function FriendsView({ onChatSelect }: FriendsViewProps) {
+export function FriendsView({ onChatSelect, onOpenProfile }: FriendsViewProps) {
   const [friends, setFriends] = useState<Friend[]>([]);
   const [requests, setRequests] = useState<any[]>([]);
   const [newFriendName, setNewFriendName] = useState("");
@@ -25,7 +26,7 @@ export function FriendsView({ onChatSelect }: FriendsViewProps) {
     type: "info" as "danger" | "info" | "alert",
   });
   const [friendToRemove, setFriendToRemove] = useState<Friend | null>(null);
-  
+
   const [searchResults, setSearchResults] = useState<Friend[]>([]);
   const [showResults, setShowResults] = useState(false);
 
@@ -353,9 +354,33 @@ export function FriendsView({ onChatSelect }: FriendsViewProps) {
 
               {/* USER INFO */}
               <div className="min-w-0">
-                <div className="truncate font-medium">{friend.username}</div>
+                <div
+                  className="truncate font-medium cursor-pointer hover:text-purple-400"
+                  onClick={() => onOpenProfile?.(friend.id)}
+                >
+                  {friend.username}
+                </div>
 
-                <div className="text-xs text-gray-400">{friend.status}</div>
+                <div className="flex items-center gap-1.5 text-xs">
+                   {(() => {
+    const status = String(friend.status || "offline").trim().toLowerCase();
+    const isOnline = status === "online";
+
+    return (
+      <>
+        <span
+          className={`h-2 w-2 rounded-full ${
+            isOnline ? "bg-green-500" : "bg-red-500"
+          }`}
+        />
+
+        <span className={isOnline ? "text-green-400" : "text-red-400"}>
+          {isOnline ? "Online" : "Offline"}
+        </span>
+      </>
+    );
+  })()}
+                </div>
               </div>
             </div>
 
@@ -366,6 +391,13 @@ export function FriendsView({ onChatSelect }: FriendsViewProps) {
                 onClick={() => onChatSelect?.(friend)}
               >
                 Message
+              </button>
+
+              <button
+                className="h-10 shrink-0 rounded border border-gray-700 bg-gray-800 px-3 py-1.5 text-sm text-gray-400 hover:border-purple-600 hover:bg-purple-600 hover:text-white cursor-pointer"
+                onClick={() => onOpenProfile?.(friend.id)}
+              >
+                View
               </button>
 
               <button
