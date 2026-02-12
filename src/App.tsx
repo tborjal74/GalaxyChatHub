@@ -127,13 +127,16 @@ function App() {
     socket.on("room_deleted", onRoomDeleted);
 
     // Connect only if we have a user (optional strategy)
-    if (currentUser) {
-      if (!socket.connected) socket.connect();
-      // If already connected, register immediately (handles page refreshes where socket might reconnect fast)
-      if (socket.connected) {
-         socket.emit('register_user', currentUser.id);
-      }
+   if (currentUser) {
+  socket.connect();
+
+  // Always emit after short delay to guarantee connection
+  setTimeout(() => {
+    if (socket.connected) {
+      socket.emit('register_user', currentUser.id);
     }
+  }, 200);
+}
 
     return () => {
       socket.off("connect", onConnect);

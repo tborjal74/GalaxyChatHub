@@ -76,22 +76,24 @@ export function FriendProfileSidebar({ userId, onClose }: FriendProfileProps) {
               <div>
                 <div className="font-medium text-white">{user.username}</div>
                 <div className="flex items-center gap-1 text-sm">
-                  <span
-                    className={`h-2 w-2 rounded-full ${
-                      user.status?.toLowerCase() === "online"
-                        ? "bg-green-500"
-                        : "bg-red-500"
-                    }`}
-                  />
-                  <span
-                    className={
-                      user.status?.toLowerCase() === "online"
-                        ? "text-green-400"
-                        : "text-red-400"
-                    }
-                  >
-                    {user.status?.toLowerCase() || "offline"}
-                  </span>
+                  {(() => {
+    const status = String(user.status || "offline").trim().toLowerCase();
+    const isOnline = status === "online";
+
+    return (
+      <>
+        <span
+          className={`h-2 w-2 rounded-full ${
+            isOnline ? "bg-green-500" : "bg-red-500"
+          }`}
+        />
+
+        <span className={isOnline ? "text-green-400" : "text-red-400"}>
+          {isOnline ? "Online" : "Offline"}
+        </span>
+      </>
+    );
+  })()}
                 </div>
               </div>
             </div>

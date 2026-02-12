@@ -123,11 +123,13 @@ export const login = async (req, res) => {
       { expiresIn: "24h" },
     );
 
-    // Update status to ONLINE
-    await prisma.user.update({
-      where: { id: user.id },
-      data: { status: "ONLINE" },
-    });
+
+     if (req.io) {
+      req.io.emit("user_status_change", {
+        userId: user.id,
+        status: "online",
+      });
+    }
 
     // Return user info and token
     const { password: _, ...userWithoutPassword } = user;

@@ -70,26 +70,46 @@ const onlineUsers = new Map();
 io.on('connection', (socket) => {
   console.log('User connected:', socket.id);
 
-  // 0. Handle User Identity & Status
-  socket.on('register_user', async (userId) => {
-      if (!userId) return;
-      
-      const uId = parseInt(userId);
-      socket.data.userId = uId;
-      onlineUsers.set(uId, socket.id);
-      
-      // Update DB to ONLINE
-      try {
-        await prisma.user.update({
-            where: { id: uId },
-            data: { status: 'ONLINE' }
-        });
-      } catch(e) { console.error("Status update error", e); }
+ socket.on('register_user', async (userId) => {
+  if (!userId) return;
 
-      // Broadcast to all
-      io.emit('user_status_change', { userId: uId, status: 'online' });
-      console.log(`User ${uId} registered and is ONLINE`);
-  });
+  const uId = parseInt(userId);
+  if (isNaN(uId)) return;
+
+  socket.data.userId = uId;
+
+  // ----- CREATE OR GET SET -----
+  if (!onlineUsers.has(uId)) {
+    onlineUsers.set(uId, new Set());
+  }
+
+  const sockets = onlineUsers.get(uId);
+
+  // ----- ADD SOCKET FIRST -----
+  sockets.add(socket.id);
+
+  console.log(`User ${uId} registered. Active sockets:`, sockets.size);
+
+  try {
+    // ONLY mark online if this is the FIRST socket
+    if (sockets.size === 1) {
+      await prisma.user.update({
+        where: { id: uId },
+        data: { status: 'ONLINE' }
+      });
+
+      io.emit('user_status_change', {
+        userId: uId,
+        status: 'online'
+      });
+    }
+  } catch (e) {
+    console.error("Status update error", e);
+  }
+});
+
+
+  
 
   // 1. Join a specific conversation room
   socket.on('join_dm', ({ currentUserId, targetUserId }) => {
@@ -162,23 +182,42 @@ io.on('connection', (socket) => {
   });
 
   socket.on('disconnect', async () => {
-    console.log('User disconnected:', socket.id);
-    const uId = socket.data.userId;
-    if (uId) {
-        onlineUsers.delete(uId);
-        
-        // Update DB to OFFLINE
-        try {
-            await prisma.user.update({
-                where: { id: uId },
-                data: { status: 'OFFLINE' }
-            });
-        } catch(e) { console.error("Status update error", e); }
+  console.log('User disconnected:', socket.id);
 
-        io.emit('user_status_change', { userId: uId, status: 'offline' });
+  const uId = socket.data.userId;
+  if (!uId) return;
+
+  const sockets = onlineUsers.get(uId);
+  if (!sockets) return;
+
+  sockets.delete(socket.id);
+
+  console.log(`User ${uId} remaining connections:`, sockets.size);
+
+  if (sockets.size === 0) {
+    onlineUsers.delete(uId);
+
+    try {
+      await prisma.user.update({
+        where: { id: uId },
+        data: { status: 'OFFLINE' }
+      });
+
+      io.emit('user_status_change', {
+        userId: uId,
+        status: 'offline'
+      });
+
+      console.log(`User ${uId} is now OFFLINE`);
+    } catch (e) {
+      console.error("Status update error", e);
     }
-  });
+  }
 });
+
+
+}); 
+
 
 // Basic route
 app.get('/', (req, res) => {
