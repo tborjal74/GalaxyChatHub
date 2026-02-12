@@ -6,6 +6,7 @@ type ProfileAvatarProps = {
   user: {
     username: string;
     avatarUrl?: string;
+    status?: string;
   };
   isEditing: boolean;
   localAvatar: string | null;
@@ -30,6 +31,8 @@ export function ProfileAvatar({
     if (localAvatar) {
       URL.revokeObjectURL(localAvatar);
     }
+
+    console.log("USER STATUS", user.status)
 
     setLocalAvatar(null);
     onUpdateProfile({ avatar: null, avatarUrl: undefined });
@@ -102,8 +105,24 @@ export function ProfileAvatar({
 
       <div className="text-center">
         <div className="flex items-center gap-2 text-sm text-muted-foreground">
-          <span className="w-3 h-3 bg-green-500 rounded-full" />
-          Online
+           <span
+      className={`w-3 h-3 rounded-full ${
+        user.status?.toUpperCase() === "ONLINE"
+          ? "bg-green-500"
+          : "bg-red-500"
+      }`}
+    />
+    <span
+      className={
+        user.status?.toUpperCase() === "ONLINE"
+          ? "text-green-400"
+          : "text-red-400"
+      }
+    >
+      {user.status?.toUpperCase() === "ONLINE"
+        ? "Online"
+        : "Offline"}
+    </span>
         </div>
       </div>
     </div>

@@ -96,6 +96,7 @@ export const getMe = async (req, res) => {
         email: true,
         bio: true,
         avatarUrl: true,
+        status: true,
         createdAt: true,
       },
     });

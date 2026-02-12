@@ -18,7 +18,12 @@ interface SidebarProps {
   open?: boolean;
   onClose?: () => void;
   onNavigate?: () => void;
-  currentUser: { username: string; email: string; avatarUrl?: string | null };
+  currentUser: {
+    username: string;
+    email: string;
+    avatarUrl?: string | null;
+    status?: string | null;
+  };
   activeView: "friends" | "rooms" | "profile";
   onViewChange: (view: "friends" | "rooms" | "profile") => void;
   onLogout: () => void;
@@ -52,6 +57,8 @@ export function Sidebar({
     onRoomSelect(roomId);
     onNavigate?.();
   };
+
+  console.log("STATUS", currentUser.status);
 
   return (
     <aside
@@ -201,8 +208,22 @@ export function Sidebar({
               {currentUser.username}
             </div>
             <div className="flex items-center gap-1 text-xs text-muted-foreground">
-              <span className="h-2 w-2 shrink-0 rounded-full bg-green-500" />
-              Online
+              <span
+                className={`h-2 w-2 shrink-0 rounded-full ${
+                  currentUser.status === "ONLINE"
+                    ? "bg-green-500"
+                    : "bg-red-500"
+                }`}
+              />
+              <span
+                className={
+                  currentUser.status === "ONLINE"
+                    ? "text-green-400"
+                    : "text-red-400"
+                }
+              >
+                {currentUser.status === "ONLINE" ? "Online" : "Offline"}
+              </span>
             </div>
           </div>
           <Button

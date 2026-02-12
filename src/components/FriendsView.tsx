@@ -362,24 +362,30 @@ export function FriendsView({ onChatSelect, onOpenProfile }: FriendsViewProps) {
                 </div>
 
                 <div className="flex items-center gap-1.5 text-xs">
-                   {(() => {
-    const status = String(friend.status || "offline").trim().toLowerCase();
-    const isOnline = status === "online";
+                  {(() => {
+                    const status = String(friend.status || "offline")
+                      .trim()
+                      .toLowerCase();
+                    const isOnline = status === "online";
 
-    return (
-      <>
-        <span
-          className={`h-2 w-2 rounded-full ${
-            isOnline ? "bg-green-500" : "bg-red-500"
-          }`}
-        />
+                    return (
+                      <>
+                        <span
+                          className={`h-2 w-2 rounded-full ${
+                            isOnline ? "bg-green-500" : "bg-red-500"
+                          }`}
+                        />
 
-        <span className={isOnline ? "text-green-400" : "text-red-400"}>
-          {isOnline ? "Online" : "Offline"}
-        </span>
-      </>
-    );
-  })()}
+                        <span
+                          className={
+                            isOnline ? "text-green-400" : "text-red-400"
+                          }
+                        >
+                          {isOnline ? "Online" : "Offline"}
+                        </span>
+                      </>
+                    );
+                  })()}
                 </div>
               </div>
             </div>
